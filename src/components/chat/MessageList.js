@@ -3,6 +3,7 @@ import EmptyStartImage from '../../resources/images/star_empty.png';
 import CloseImage from '../../resources/images/close.png';
 import ModalType from '../../config/ModalType';
 import Constant from '../../config/Constant';
+import Helper from '../../utils/Helper';
 import ModalService from '../../services/ModalService';
 import moment from 'moment';
 
@@ -33,6 +34,7 @@ class MessageList extends React.Component {
       let messageId = messageInfo.id;
       let message = messageInfo.message;
       let messageDetail = messageInfo.messageDetail;
+      let noReadCount = messageInfo.noReadCount;
       let resultMessage = messageDetail ? messageDetail : message;
       let messageComponent = null;
       resultMessage = replaceHighLighText(resultMessage, searchValue);
@@ -95,6 +97,9 @@ class MessageList extends React.Component {
                   color: 'black'
                 }}
               >
+                <span className={noReadCount ? 'red' : 'none'}>
+                  {noReadCount}
+                </span>
                 <span
                   style={{
                     backgroundImage: `url(${EmptyStartImage})`,
@@ -120,7 +125,8 @@ class MessageList extends React.Component {
                   }}
                 />
                 <div style={{ color: '#a2a2a2' }}>
-                  {moment(messageInfo.createDate).format('LTS')}
+                  {/* {moment(messageInfo.createDate).format('LTS')} */}
+                  {Helper.convertMessageDateToString(messageInfo.createDate)}
                 </div>
               </div>
             </div>
@@ -164,6 +170,9 @@ class MessageList extends React.Component {
                   color: 'black'
                 }}
               >
+                <span className={noReadCount ? 'red' : 'none'}>
+                  {noReadCount}
+                </span>
                 <span
                   style={{
                     backgroundImage: `url(${EmptyStartImage})`,
@@ -188,7 +197,8 @@ class MessageList extends React.Component {
                   }}
                 />
                 <div style={{ color: '#a2a2a2' }}>
-                  {moment(messageInfo.createDate).format('LTS')}
+                  {/* {moment(messageInfo.createDate).format('LTS')} */}
+                  {Helper.convertMessageDateToString(messageInfo.createDate)}
                 </div>
               </div>
             </div>

@@ -211,6 +211,18 @@ const convertStringBySecond = function(diffSecond) {
   return timeString + ':' + minuteString + ':' + secondString;
 };
 
+const convertMessageDateToString = function(createDate) {
+  let isToday = moment(createDate, 'YYYY-MM-DDTHH:mm:ss.SSSZ').isSame(
+    moment(),
+    'day'
+  );
+  if (isToday) {
+    return moment(createDate).format('LTS');
+  } else {
+    return moment(createDate).format('MM/DD HH:mm');
+  }
+};
+
 const Helper = {
   convertEmptyValue: convertEmptyValue,
   copyToClipboard: copyToClipboard,
@@ -228,7 +240,8 @@ const Helper = {
   checkIsToady: checkIsToady,
   checkImageFileUploadExtension: checkImageFileUploadExtension,
   getTodayString: getTodayString,
-  convertStringBySecond: convertStringBySecond
+  convertStringBySecond: convertStringBySecond,
+  convertMessageDateToString: convertMessageDateToString
 };
 
 export default Helper;

@@ -461,6 +461,7 @@ class ChatStore {
   @action
   matchRoom(roomInfo) {
     if (!this.currentRoomInfo || this.currentRoomInfo.id !== roomInfo.id) {
+      this.messageList = [];
       let { profile } = this.rootStore.appStore;
       let { speakerId } = profile;
       if (this.currentRoomInfo) {
@@ -577,7 +578,10 @@ class ChatStore {
   @action
   selectRoom(roomInfo) {
     // TODO : 메시지 목록을 api로 가져온다
-    this.currentRoomInfo = roomInfo;
+    if (!this.currentRoomInfo || this.currentRoomInfo.id !== roomInfo.id) {
+      this.currentRoomInfo = roomInfo;
+      this.messageList = [];
+    }
     this.selectTemplateId = null;
   }
 
@@ -744,7 +748,14 @@ class ChatStore {
   }
 
   onMessageList(messageList) {
-    console.log('messageList : ' + messageList);
+    runInAction(() => {
+      let oriMessageList = this.messageList.toJS();
+      let newMessageList = _.concat(messageList, oriMessageList);
+      this.messageList = newMessageList;
+      setTimeout(() => {
+        Helper.scrollBottomByDivId('messageListScroll', 500);
+      }, 500);
+    });
   }
 
   onMessage(message) {

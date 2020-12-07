@@ -758,11 +758,28 @@ class ChatStore {
     });
   }
 
-  onMessage(message) {
+  onMessage(newMessage) {
     runInAction(() => {
       let oriMessageList = this.messageList.toJS();
-      this.messageList = oriMessageList.concat([message]);
       Helper.scrollBottomByDivId('messageListScroll', 500);
+      let socket = this.socket;
+      let roomId = this.currentRoomInfo.id;
+      let { profile } = this.rootStore.appStore;
+      let { speakerId } = profile;
+      if (
+        profile.id === this.currentRoomInfo.memberId &&
+        newMessage.speakerId !== speakerId
+      ) {
+        SocketService.readMessage(
+          socket,
+          roomId,
+          speakerId,
+          newMessage.id,
+          newMessage.id
+        );
+        newMessage.noReadCount = newMessage.noReadCount - 1;
+      }
+      this.messageList = oriMessageList.concat([newMessage]);
     });
   }
 
@@ -770,24 +787,39 @@ class ChatStore {
     console.log('error : ' + error);
   }
 
-  onReadMessage(readMessage) {
-    console.log('readMessage : ' + readMessage);
+  @action
+  onReadMessage(data) {
+    console.log('readMessage : ' + data);
+    let { profile } = this.rootStore.appStore;
+    let { speakerId } = profile;
+    let roomId = this.currentRoomInfo.id;
+    // room 정보가 동일하고 speakerId가 내가 아닌 경우에만 처리
+    if (
+      roomId === data.roomId &&
+      profile.id === this.currentRoomInfo.memberId
+    ) {
+      if (speakerId !== data.speakerId) {
+        let messageList = this.messageList.toJS();
+        let checkUpdate = false;
+        let newMessageList = messageList.map(info => {
+          if (info.noReadCount !== 0) {
+            // id가 startId 보다 크거나 endId 보다 작거나 같은 경우에 읽음 처리 -1
+            if (info.id >= data.startId - 1 && info.id <= data.endId) {
+              info.noReadCount = info.noReadCount - 1;
+              checkUpdate = true;
+            }
+          }
+          return info;
+        });
+        if (checkUpdate) {
+          this.messageList = newMessageList;
+        }
+      }
+    }
   }
 
   onReceiveEvent(eventInfo) {
     console.log('receiveEvent : ' + eventInfo);
-  }
-
-  handleAccordionChange(event, accordionName, isOpen) {
-    let offsetParent1 = event.target.offsetParent;
-    let parent1TageName = offsetParent1.tagName;
-    if (!isOpen && event.target.offsetParent) {
-      let moveScrollYposition = event.target.offsetParent.offsetTop;
-      if (parent1TageName === 'P') {
-        moveScrollYposition = event.target.offsetParent.offsetParent.offsetTop;
-      }
-    }
-    // Helper.scrollTopByDivId('messageListScroll', moveScrollYposition, 100);
   }
 
   @action

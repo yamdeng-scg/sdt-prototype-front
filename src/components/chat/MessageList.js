@@ -169,11 +169,20 @@ class MessageList extends React.Component {
                 wordBreak: 'break-all'
               }}
             >
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: resultMessage
-                }}
-              />
+              {messageType === Constant.MESSAGE_TYPE_IMAGE ? (
+                <img
+                  src={message}
+                  style={{ maxHeight: 300, width: '100%' }}
+                  alt=""
+                  onClick={() => this.openModal(message)}
+                />
+              ) : (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: resultMessage
+                  }}
+                />
+              )}
               <div
                 style={{
                   position: 'absolute',

@@ -527,6 +527,13 @@ class ChatStore {
             body: '상담이 종료되었습니다',
             ok: () => {
               runInAction(() => {
+                if (
+                  this.socket &&
+                  this.currentRoomInfo &&
+                  this.currentRoomInfo.id === roomInfo.id
+                ) {
+                  SocketService.leave(this.socket, roomInfo.id);
+                }
                 this.currentRoomTabName = Constant.ROOM_TYPE_CLOSE;
                 this.search();
               });

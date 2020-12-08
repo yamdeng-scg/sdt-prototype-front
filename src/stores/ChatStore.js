@@ -175,36 +175,37 @@ class ChatStore {
   onMessageList(messageList) {
     if (!messageList.length) {
       this.notMoreMessage = true;
-    }
-    let imageMessage = _.clone(messageList[messageList.length - 1]);
-    imageMessage.messageType = Constant.MESSAGE_TYPE_IMAGE;
-    imageMessage.id = 999999;
-    imageMessage.message =
-      'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png';
-    messageList.push(imageMessage);
-    let oriMessageList = this.messageList.toJS();
-    let updateMessageList = messageList.concat(oriMessageList);
-    let groupingDate = '';
-    updateMessageList.forEach(messageInfo => {
-      messageInfo.groupingDate = '';
-      let createDateString = moment(messageInfo.createDate).format(
-        'YYYY-MM-DD'
-      );
-      if (groupingDate !== createDateString) {
-        messageInfo.groupingDate = createDateString;
-        groupingDate = createDateString;
-      }
-    });
-    this.messageList = updateMessageList;
-    if (!this.afterJoinListCall) {
-      setTimeout(() => {
-        Helper.scrollBottomByDivId('messageListScroll', 500);
+    } else {
+      let imageMessage = _.clone(messageList[messageList.length - 1]);
+      imageMessage.messageType = Constant.MESSAGE_TYPE_IMAGE;
+      imageMessage.id = 999999;
+      imageMessage.message =
+        'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png';
+      messageList.push(imageMessage);
+      let oriMessageList = this.messageList.toJS();
+      let updateMessageList = messageList.concat(oriMessageList);
+      let groupingDate = '';
+      updateMessageList.forEach(messageInfo => {
+        messageInfo.groupingDate = '';
+        let createDateString = moment(messageInfo.createDate).format(
+          'YYYY-MM-DD'
+        );
+        if (groupingDate !== createDateString) {
+          messageInfo.groupingDate = createDateString;
+          groupingDate = createDateString;
+        }
+      });
+      this.messageList = updateMessageList;
+      if (!this.afterJoinListCall) {
         setTimeout(() => {
-          runInAction(() => {
-            this.afterJoinListCall = true;
-          });
-        }, 100);
-      }, 1000);
+          Helper.scrollBottomByDivId('messageListScroll', 500);
+          setTimeout(() => {
+            runInAction(() => {
+              this.afterJoinListCall = true;
+            });
+          }, 100);
+        }, 1000);
+      }
     }
   }
 

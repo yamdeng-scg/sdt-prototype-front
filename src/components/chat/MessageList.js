@@ -5,7 +5,6 @@ import ModalType from '../../config/ModalType';
 import Constant from '../../config/Constant';
 import Helper from '../../utils/Helper';
 import ModalService from '../../services/ModalService';
-import moment from 'moment';
 
 const replaceHighLighText = function(message, searchValue) {
   let resultMessage = message;
@@ -52,7 +51,8 @@ class MessageList extends React.Component {
                 display: 'inline-block',
                 textAlign: 'center',
                 padding: '11px 15px 9px',
-                color: 'red'
+                color: 'red',
+                wordBreak: 'break-all'
               }}
             >
               <div>{message}</div>
@@ -80,14 +80,23 @@ class MessageList extends React.Component {
                   messageType === Constant.MESSAGE_TYPE_LINK ? 'bold' : '',
                 textAlign: 'left',
                 padding: '11px 15px 9px',
-                color: '#fff'
+                color: '#fff',
+                wordBreak: 'break-all'
               }}
             >
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: resultMessage
-                }}
-              />
+              {messageType === Constant.MESSAGE_TYPE_IMAGE ? (
+                <img
+                  src={message}
+                  style={{ maxHeight: 300, width: '100%' }}
+                  alt=""
+                />
+              ) : (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: resultMessage
+                  }}
+                />
+              )}
               <div
                 style={{
                   position: 'absolute',
@@ -107,7 +116,10 @@ class MessageList extends React.Component {
                     backgroundPosition: 'left top',
                     width: 16,
                     height: 16,
-                    display: 'inline-block'
+                    display:
+                      messageType === Constant.MESSAGE_TYPE_IMAGE
+                        ? 'none'
+                        : 'inline-block'
                   }}
                   onClick={this.openTemplateFormPopup}
                 />
@@ -153,7 +165,8 @@ class MessageList extends React.Component {
                   messageType === Constant.MESSAGE_TYPE_LINK ? 'bold' : '',
                 textAlign: 'left',
                 padding: '11px 15px 9px',
-                color: '#fff'
+                color: '#fff',
+                wordBreak: 'break-all'
               }}
             >
               <div
@@ -164,7 +177,7 @@ class MessageList extends React.Component {
               <div
                 style={{
                   position: 'absolute',
-                  right: -82,
+                  right: -90,
                   bottom: -2,
                   textAlign: 'left',
                   color: 'black'

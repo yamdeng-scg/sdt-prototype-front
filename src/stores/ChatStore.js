@@ -176,12 +176,12 @@ class ChatStore {
     if (!messageList.length) {
       this.notMoreMessage = true;
     } else {
-      let imageMessage = _.clone(messageList[messageList.length - 1]);
-      imageMessage.messageType = Constant.MESSAGE_TYPE_IMAGE;
-      imageMessage.id = 999999;
-      imageMessage.message =
-        'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png';
-      messageList.push(imageMessage);
+      // let imageMessage = _.clone(messageList[messageList.length - 1]);
+      // imageMessage.messageType = Constant.MESSAGE_TYPE_IMAGE;
+      // imageMessage.id = 999999;
+      // imageMessage.message =
+      //   'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png';
+      // messageList.push(imageMessage);
       let oriMessageList = this.messageList.toJS();
       let updateMessageList = messageList.concat(oriMessageList);
       let groupingDate = '';

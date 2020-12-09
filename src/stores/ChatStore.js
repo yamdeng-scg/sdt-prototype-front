@@ -508,6 +508,7 @@ class ChatStore {
             );
             this.currentRoomInfo = data;
             this.currentRoomTabName = Constant.ROOM_TYPE_ING;
+            this.search();
           });
         });
       }

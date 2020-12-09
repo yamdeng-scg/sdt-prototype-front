@@ -147,6 +147,7 @@ class RoomList extends React.Component {
           centered
           onChange={tabName => chatStore.changeRoomTab(tabName)}
         >
+          {/* 대기 방 목록 */}
           <TabPane
             tab={
               currentRoomTabName === Constant.ROOM_TYPE_WAIT &&
@@ -231,7 +232,10 @@ class RoomList extends React.Component {
                       <SmileOutlined className="color-basic font-em1 inblock mrl5 bold" />
                     )}
                     {item.noReadCount ? (
-                      <Badge count={25} className="site-badge-count-room">
+                      <Badge
+                        count={item.noReadCount}
+                        className="site-badge-count-room"
+                      >
                         <span className="inblock mrl15" />
                       </Badge>
                     ) : null}
@@ -284,14 +288,6 @@ class RoomList extends React.Component {
                       >
                         상담하기
                       </Button>{' '}
-                      {/* <Button
-                        shape="round"
-                        size="small"
-                        onClick={this.openAlertPopup}
-                        className="bg-basic color-white bold"
-                      >
-                        이관
-                      </Button> */}
                     </div>
                   </List.Item>
                 )}
@@ -312,6 +308,7 @@ class RoomList extends React.Component {
               </div>
             )}
           </TabPane>
+          {/* 진행 방 목록 */}
           <TabPane
             tab={
               <span
@@ -411,7 +408,10 @@ class RoomList extends React.Component {
                       <SmileOutlined className="color-basic font-em1 inblock mrl5 bold" />
                     )}
                     {item.noReadCount ? (
-                      <Badge count={25} className="site-badge-count-room">
+                      <Badge
+                        count={item.noReadCount}
+                        className="site-badge-count-room"
+                      >
                         <span className="inblock mrl15" />
                       </Badge>
                     ) : null}
@@ -509,6 +509,7 @@ class RoomList extends React.Component {
               </div>
             )}
           </TabPane>
+          {/* 종료 방 목록 */}
           <TabPane
             tab={
               <span
@@ -626,11 +627,6 @@ class RoomList extends React.Component {
                     ) : (
                       <SmileOutlined className="color-basic font-em1 inblock mrl5 bold" />
                     )}
-                    {item.noReadCount ? (
-                      <Badge count={25} className="site-badge-count-room">
-                        <span className="inblock mrl15" />
-                      </Badge>
-                    ) : null}
                     {item.memberName ? (
                       <span
                         className="bold color-basic inblock bg-gray"

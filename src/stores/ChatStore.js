@@ -460,58 +460,33 @@ class ChatStore {
 
   @action
   matchRoom(roomInfo) {
-    if (!this.currentRoomInfo || this.currentRoomInfo.id !== roomInfo.id) {
-      this.messageList = [];
-      let { profile } = this.rootStore.appStore;
-      let { speakerId } = profile;
-      if (this.currentRoomInfo) {
-        SocketService.leave(this.socket, this.currentRoomInfo.id);
-      }
-      // 종료 or 대기
-      if (roomInfo.state >= 2 || (roomInfo.state < 2 && !roomInfo.memberId)) {
-        ApiService.post('room/' + roomInfo.id + '/matchRoom').then(response => {
-          runInAction(() => {
-            let data = response.data;
-            SocketService.join(this.socket, data.id, speakerId).then(
-              messageList => {
-                runInAction(() => {
-                  let oriMessageList = this.messageList.toJS();
-                  let newMessageList = _.concat(messageList, oriMessageList);
-                  this.messageList = newMessageList;
-                  setTimeout(() => {
-                    Helper.scrollBottomByDivId('messageListScroll', 500);
-                  }, 500);
-                });
-              }
-            );
-            this.currentRoomInfo = data;
-            this.currentRoomTabName = Constant.ROOM_TYPE_ING;
-            this.search();
-          });
+    this.messageList = [];
+    let { profile } = this.rootStore.appStore;
+    let { speakerId } = profile;
+    if (this.currentRoomInfo) {
+      SocketService.leave(this.socket, this.currentRoomInfo.id);
+    }
+    // 종료 or 대기
+    if (roomInfo.state >= 2 || (roomInfo.state < 2 && !roomInfo.memberId)) {
+      ApiService.post('room/' + roomInfo.id + '/matchRoom').then(response => {
+        runInAction(() => {
+          let data = response.data;
+          SocketService.join(this.socket, data.id, speakerId);
+          this.currentRoomInfo = data;
+          this.currentRoomTabName = Constant.ROOM_TYPE_ING;
+          this.search();
         });
-      } else {
-        // 진행
-        ApiService.get('room/' + roomInfo.id).then(response => {
-          runInAction(() => {
-            let data = response.data;
-            SocketService.join(this.socket, data.id, speakerId).then(
-              messageList => {
-                runInAction(() => {
-                  let oriMessageList = this.messageList.toJS();
-                  let newMessageList = _.concat(messageList, oriMessageList);
-                  this.messageList = newMessageList;
-                  setTimeout(() => {
-                    Helper.scrollBottomByDivId('messageListScroll', 500);
-                  }, 500);
-                });
-              }
-            );
-            this.currentRoomInfo = data;
-            this.currentRoomTabName = Constant.ROOM_TYPE_ING;
-            this.search();
-          });
+      });
+    } else {
+      // 진행
+      ApiService.get('room/' + roomInfo.id).then(response => {
+        runInAction(() => {
+          let data = response.data;
+          SocketService.join(this.socket, data.id, speakerId);
+          this.currentRoomInfo = data;
+          this.currentRoomTabName = Constant.ROOM_TYPE_ING;
         });
-      }
+      });
     }
     this.selectTemplateId = null;
   }
@@ -762,6 +737,7 @@ class ChatStore {
       this.messageList = newMessageList;
       setTimeout(() => {
         Helper.scrollBottomByDivId('messageListScroll', 500);
+        this.search();
       }, 500);
     });
   }
@@ -827,13 +803,30 @@ class ChatStore {
   }
 
   onReceiveEvent(eventInfo) {
-    console.log('receiveEvent : ' + eventInfo);
+    if (eventInfo) {
+      if (eventInfo.eventName === 'reload-ready-room') {
+        runInAction(() => {
+          this.currentRoomTabName = Constant.ROOM_TYPE_WAIT;
+          this.search();
+        });
+      }
+    }
+  }
+
+  @action
+  disconnect() {
+    let socket = this.socket;
+    if (socket) {
+      socket.disconnect();
+    }
+    this.messageList = [];
   }
 
   @action
   clear() {
     this.currentRoomInfo = null;
     this.displayBottomContent = false;
+    this.disconnect();
   }
 }
 

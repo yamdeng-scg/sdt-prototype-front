@@ -647,6 +647,22 @@ class ChatStore {
       ModalService.alert({ body: '등록한 민원이 없습니다' });
     }
   }
+
+  @action
+  openJoinHistoryPopup() {
+    let currentRoomInfo = this.currentRoomInfo;
+    if (currentRoomInfo.minwonHistoryCount) {
+      ModalService.openMiddlePopup(ModalType.JOIN_HISTORY_POPUP, {
+        customerName: currentRoomInfo.customerName,
+        chatid: currentRoomInfo.chatid,
+        gasappMemberNumber: currentRoomInfo.gasappMemberNumber,
+        roomId: currentRoomInfo.id
+      });
+    } else {
+      ModalService.alert({ body: '과거 채팅상담 이력이 존재하지 않습니다.' });
+    }
+  }
+
   @action
   search() {
     this.processingRoomListApiCall = true;
@@ -824,9 +840,40 @@ class ChatStore {
 
   @action
   clear() {
-    this.currentRoomInfo = null;
-    this.displayBottomContent = false;
     this.disconnect();
+    if (this.waitTimeRefreshIntervalHandler) {
+      clearInterval(this.waitTimeRefreshIntervalHandler);
+    }
+
+    this.currentRoomInfo = null;
+    this.currentContractInfo = null;
+    this.bottmActiveTabIndex = -1;
+    this.currentRoomTabName = 'wait';
+    this.readyRoomSort = Constant.READY_ROOM_SORT_WAIT_TIME;
+    this.displayBottomContent = false;
+    this.displaySearchMessgeComponent = false;
+    this.roomList = [];
+    this.maxDateConvertString = '';
+    this.averageSpeakTimeString = '';
+    this.checkSelf = false;
+    this.earchType = '';
+    this.searchValue = '';
+    this.startDate = moment().subtract(12, 'months');
+    this.endDate = moment();
+    this.processingRoomListApiCall = false;
+    this.ingCheckSelf = false;
+    this.ingSearchType = 'customerName';
+    this.ingSearchValue = '';
+    this.closeCheckSelf = false;
+    this.closeSearchType = 'customerName';
+    this.closeSearchValue = '';
+    this.messageList = [];
+    this.message = '';
+    this.selectTemplateId = null;
+    this.searchContent = '';
+    this.applySearchContent = '';
+    this.currentSearchIndex = -1;
+    this.searchApplyArray = [];
   }
 }
 

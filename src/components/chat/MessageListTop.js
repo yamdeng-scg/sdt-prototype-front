@@ -64,7 +64,7 @@ class MessageListTop extends React.Component {
           <Col span={12} className="pd-left5 pd-right5">
             <Button
               block
-              onClick={() => chatStore.openMinwonHistoryPopup()}
+              onClick={() => chatStore.openJoinHistoryPopup()}
               className="bg-basic color-white bold"
             >
               과거 채팅상담 기록

@@ -103,7 +103,11 @@ class MessageList extends React.Component {
                   left: -82,
                   bottom: -2,
                   textAlign: 'right',
-                  color: 'black'
+                  color: 'black',
+                  display:
+                    wrapperType === Constant.MESSAGE_LIST_WRAPPER_TYPE_HISTORY
+                      ? 'none'
+                      : 'inline-block'
                 }}
               >
                 <span className={noReadCount ? 'red' : 'none'}>
@@ -129,11 +133,7 @@ class MessageList extends React.Component {
                     backgroundRepeat: 'no-repeat',
                     backgroundPosition: 'left top',
                     width: 16,
-                    height: 16,
-                    display:
-                      wrapperType === Constant.MESSAGE_LIST_WRAPPER_TYPE_HISTORY
-                        ? 'none'
-                        : 'inline-block'
+                    height: 16
                   }}
                 />
                 <div style={{ color: '#a2a2a2' }}>
@@ -189,7 +189,11 @@ class MessageList extends React.Component {
                   right: -90,
                   bottom: -2,
                   textAlign: 'left',
-                  color: 'black'
+                  color: 'black',
+                  display:
+                    wrapperType === Constant.MESSAGE_LIST_WRAPPER_TYPE_HISTORY
+                      ? 'none'
+                      : 'inline-block'
                 }}
               >
                 <span className={noReadCount ? 'red' : 'none'}>

@@ -50,6 +50,9 @@ class MessageContainer extends React.Component {
                 messageList={messageList}
                 wrapperType={Constant.MESSAGE_LIST_WRAPPER_TYPE_CHAT}
                 searchValue={applySearchContent}
+                deleteHandle={messageId => {
+                  chatStore.deleteMessage(messageId);
+                }}
               />
               {/* 버튼 3개 */}
               <div

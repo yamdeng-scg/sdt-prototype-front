@@ -114,11 +114,7 @@ class JoinHistoryPopup extends React.Component {
           </Col>
         </Row>
         <div style={{ maxHeight: 600, overflowY: 'scroll' }}>
-          <Collapse
-            onChange={id => {
-              this.change(id);
-            }}
-          >
+          <Collapse>
             {joinHistoryList.map(info => {
               let {
                 id,
@@ -137,7 +133,11 @@ class JoinHistoryPopup extends React.Component {
               return (
                 <Panel
                   header={
-                    <div>
+                    <div
+                      onClick={() => {
+                        this.change(id);
+                      }}
+                    >
                       {startDate} ~ {endDate}
                       <span className="bold inblock mrl20" />|
                       <span className="bold inblock mrl20">담당자</span> :

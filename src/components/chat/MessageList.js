@@ -25,7 +25,7 @@ class MessageList extends React.Component {
   }
 
   convertMessageListToComponet() {
-    let { messageList, wrapperType, searchValue } = this.props;
+    let { messageList, wrapperType, searchValue, deleteHandle } = this.props;
     let messsageListComponent = messageList.map(messageInfo => {
       let isEmployee = messageInfo.isEmployee;
       let isSystemMessage = messageInfo.isSystemMessage;
@@ -104,10 +104,7 @@ class MessageList extends React.Component {
                   bottom: -2,
                   textAlign: 'right',
                   color: 'black',
-                  display:
-                    wrapperType === Constant.MESSAGE_LIST_WRAPPER_TYPE_HISTORY
-                      ? 'none'
-                      : 'inline-block'
+                  display: 'inline-block'
                 }}
               >
                 <span className={noReadCount ? 'red' : 'none'}>
@@ -128,12 +125,17 @@ class MessageList extends React.Component {
                   onClick={this.openTemplateFormPopup}
                 />
                 <span
+                  onClick={() => deleteHandle(messageId)}
                   style={{
                     backgroundImage: `url(${CloseImage})`,
                     backgroundRepeat: 'no-repeat',
                     backgroundPosition: 'left top',
                     width: 16,
-                    height: 16
+                    height: 16,
+                    display:
+                      wrapperType === Constant.MESSAGE_LIST_WRAPPER_TYPE_HISTORY
+                        ? 'none'
+                        : 'inline-block'
                   }}
                 />
                 <div style={{ color: '#a2a2a2' }}>
@@ -190,10 +192,7 @@ class MessageList extends React.Component {
                   bottom: -2,
                   textAlign: 'left',
                   color: 'black',
-                  display:
-                    wrapperType === Constant.MESSAGE_LIST_WRAPPER_TYPE_HISTORY
-                      ? 'none'
-                      : 'inline-block'
+                  display: 'inline-block'
                 }}
               >
                 <span className={noReadCount ? 'red' : 'none'}>
@@ -207,19 +206,6 @@ class MessageList extends React.Component {
                     width: 16,
                     height: 16,
                     display: 'inline-block'
-                  }}
-                />
-                <span
-                  style={{
-                    backgroundImage: `url(${CloseImage})`,
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'left top',
-                    width: 16,
-                    height: 16,
-                    display:
-                      wrapperType === Constant.MESSAGE_LIST_WRAPPER_TYPE_HISTORY
-                        ? 'none'
-                        : 'inline-block'
                   }}
                 />
                 <div style={{ color: '#a2a2a2' }}>
@@ -247,10 +233,20 @@ class MessageList extends React.Component {
       <React.Fragment>
         <div
           style={{
-            height: clientHeight,
+            height:
+              wrapperType === Constant.MESSAGE_LIST_WRAPPER_TYPE_CHAT
+                ? clientHeight
+                : 'auto',
+            maxHeight:
+              wrapperType === Constant.MESSAGE_LIST_WRAPPER_TYPE_CHAT
+                ? 'auto'
+                : clientHeight,
             overflowY: 'scroll',
             position: 'relative',
-            padding: '10px 10px 90px 10px'
+            padding:
+              wrapperType === Constant.MESSAGE_LIST_WRAPPER_TYPE_CHAT
+                ? '10px 10px 90px 10px'
+                : '10px 10px 10px 10px'
           }}
           id={
             wrapperType === Constant.MESSAGE_LIST_WRAPPER_TYPE_CHAT

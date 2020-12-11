@@ -743,7 +743,7 @@ class ChatStore {
   }
 
   onWelcome(socketResponse) {
-    message.info('welcome : ' + JSON.stringify(socketResponse), 1);
+    // message.info('welcome : ' + JSON.stringify(socketResponse), 1);
   }
 
   onMessageList(messageList) {
@@ -836,6 +836,21 @@ class ChatStore {
       socket.disconnect();
     }
     this.messageList = [];
+  }
+
+  @action
+  deleteMessage(messageId) {
+    ApiService.delete('message/' + messageId).then(() => {
+      runInAction(() => {
+        let messageList = this.messageList.toJS();
+        let searchIndex = _.findIndex(messageList, info => {
+          return info.id === messageId;
+        });
+        this.messageList = update(messageList, {
+          $splice: [[searchIndex, 1]]
+        });
+      });
+    });
   }
 
   @action

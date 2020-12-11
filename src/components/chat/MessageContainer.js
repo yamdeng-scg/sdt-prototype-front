@@ -32,7 +32,8 @@ class MessageContainer extends React.Component {
       searchContent,
       disabledPrevButton,
       disabledNextButton,
-      applySearchContent
+      applySearchContent,
+      viewBottomArea
     } = chatStore;
     let listClientHeight = clientHeight - 270;
     if (displayBottomContent) {

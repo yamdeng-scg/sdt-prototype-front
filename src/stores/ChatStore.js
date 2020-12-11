@@ -853,6 +853,16 @@ class ChatStore {
     });
   }
 
+  @computed
+  get viewBottomArea() {
+    // 현재 방의 담당자이고 방의 상태가 종료가 아닌 경우에만 보이게끔
+    let display = true;
+    let currentRoomInfo = this.currentRoomInfo;
+    let { profile } = this.rootStore.appStore;
+    let { companyId, speakerId } = profile;
+    return display;
+  }
+
   @action
   clear() {
     this.disconnect();

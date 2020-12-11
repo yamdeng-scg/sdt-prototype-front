@@ -160,7 +160,7 @@ class ChatStore {
 
   @action
   onWelcome(welcomeInfo) {
-    message.info('welcome : ' + JSON.stringify(welcomeInfo));
+    // message.info('welcome : ' + JSON.stringify(welcomeInfo));
     let customer = welcomeInfo.customer;
     let { roomId, speakerId } = customer;
     this.customer = customer;

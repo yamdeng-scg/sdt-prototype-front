@@ -23,7 +23,8 @@ class MessageContainer extends React.Component {
   }
 
   render() {
-    let { uiStore, chatStore } = this.props;
+    let { uiStore, chatStore, appStore } = this.props;
+    let { isManager } = appStore;
     let { clientHeight } = uiStore;
     let {
       displayBottomContent,
@@ -33,11 +34,26 @@ class MessageContainer extends React.Component {
       disabledPrevButton,
       disabledNextButton,
       applySearchContent,
-      viewBottomArea
+      viewBottomArea,
+      currentRoomInfo
     } = chatStore;
+    let viewMyTalkMoveButton =
+      isManager &&
+      !viewBottomArea &&
+      currentRoomInfo.state === Constant.ROOM_STATE_ING;
+    let viewRestartButton = currentRoomInfo.state === Constant.ROOM_STATE_CLOSE;
     let listClientHeight = clientHeight - 270;
-    if (displayBottomContent) {
+    if (viewBottomArea && displayBottomContent) {
       listClientHeight = clientHeight - 715;
+    }
+    if (!viewBottomArea) {
+      listClientHeight = listClientHeight + 32 + 46;
+    }
+    if (viewMyTalkMoveButton) {
+      listClientHeight = listClientHeight - 32;
+    }
+    if (viewRestartButton) {
+      listClientHeight = listClientHeight - 32;
     }
     return (
       <div style={{ position: 'relative' }} className="bor-right">
@@ -70,10 +86,22 @@ class MessageContainer extends React.Component {
                 >
                   검색
                 </Button>{' '}
-                <Button type="primary" shape="circle" size="large">
+                <Button
+                  type="primary"
+                  shape="circle"
+                  size="large"
+                  className={viewBottomArea ? '' : 'none'}
+                  onClick={() => chatStore.transferRoom(currentRoomInfo)}
+                >
                   이관
                 </Button>{' '}
-                <Button type="primary" shape="circle" size="large">
+                <Button
+                  type="primary"
+                  shape="circle"
+                  size="large"
+                  className={viewBottomArea ? '' : 'none'}
+                  onClick={() => chatStore.closeRoom(currentRoomInfo)}
+                >
                   종료
                 </Button>
               </div>
@@ -156,11 +184,31 @@ class MessageContainer extends React.Component {
               </div>
             </React.Fragment>
           </Col>
-          <Col span={24}>
+          <Col span={24} style={{ display: viewBottomArea ? '' : 'none' }}>
             <SendMessageInput />
           </Col>
+          {/* 내 상담으로 가져오기 버튼 : 관리자에게만 보이고 내가 상담사 아니고 진행중인 상담에 대해서만 */}
+          <Col span={24} className={viewMyTalkMoveButton ? '' : 'none'}>
+            <Button
+              block
+              type={'primary'}
+              onClick={() => chatStore.matchRoom(currentRoomInfo)}
+            >
+              내 상담으로 가져오기
+            </Button>
+          </Col>
+          {/* 상담 다시 시작하기 버튼 : 관리자에게만 보이고 내가 상담사 아니고 진행중인 상담에 대해서만 */}
+          <Col span={24} className={viewRestartButton ? '' : 'none'}>
+            <Button
+              block
+              type={'primary'}
+              onClick={() => chatStore.matchRoom(currentRoomInfo)}
+            >
+              상담 다시 시작하기
+            </Button>
+          </Col>
         </Row>
-        <Row>
+        <Row style={{ display: viewBottomArea ? '' : 'none' }}>
           <Col span={24}>
             <ChatAreaBottom />
           </Col>

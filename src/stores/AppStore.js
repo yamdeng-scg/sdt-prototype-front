@@ -2,6 +2,7 @@ import { observable, action, runInAction, computed } from 'mobx';
 import Helper from '../utils/Helper';
 import ApiService from '../services/ApiService';
 import ModalService from '../services/ModalService';
+import Constant from '../config/Constant';
 
 class AppStore {
   // company
@@ -135,7 +136,7 @@ class AppStore {
   get isManager() {
     let profile = this.profile;
     let isManager = false;
-    if (profile && profile.authLevel < 4) {
+    if (profile && profile.authLevel <= Constant.MEMBER_AUTH_MANAGER) {
       isManager = true;
     }
     return isManager;

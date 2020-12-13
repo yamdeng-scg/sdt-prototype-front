@@ -52,11 +52,25 @@ Constant.SIDE_BAR_MENU_MANAGER = 'manager';
 Constant.MESSAGE_LIST_WRAPPER_TYPE_CHAT = 'chat';
 Constant.MESSAGE_LIST_WRAPPER_TYPE_HISTORY = 'history';
 
-// 0(일반), 1(이미지) 4(링크) 5(이모티콘) 6(전화번호)
+// 0(일반); 1(이미지) 4(링크) 5(이모티콘) 6(전화번호)
 Constant.MESSAGE_TYPE_NORMAL = 0;
 Constant.MESSAGE_TYPE_IMAGE = 1;
 Constant.MESSAGE_TYPE_LINK = 4;
 Constant.MESSAGE_TYPE_EMOTICION = 5;
 Constant.MESSAGE_TYPE_TEL = 6;
+
+// 방 상태
+Constant.ROOM_STATE_READY = 0;
+Constant.ROOM_STATE_ING = 1;
+Constant.ROOM_STATE_CLOSE = 8;
+
+// 권한 : 0:sys, 1:super, 2:admin, 3:mgr, 4:emp, 7:reader,9:guest
+Constant.MEMBER_AUTH_SYS = 0;
+Constant.MEMBER_AUTH_SUPER = 1;
+Constant.MEMBER_AUTH_ADMIN = 2;
+Constant.MEMBER_AUTH_MANAGER = 3;
+Constant.MEMBER_AUTH_EMP = 4;
+Constant.MEMBER_AUTH_READER = 7;
+Constant.MEMBER_AUTH_GUEST = 9;
 
 export default Constant;

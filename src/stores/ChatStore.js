@@ -503,6 +503,13 @@ class ChatStore {
             body: '상담이 종료되었습니다',
             ok: () => {
               runInAction(() => {
+                let roomInfo = response.data;
+                if (
+                  this.currentRoomInfo &&
+                  this.currentRoomInfo.id === roomInfo.id
+                ) {
+                  this.currentRoomInfo = roomInfo;
+                }
                 if (
                   this.socket &&
                   this.currentRoomInfo &&
@@ -541,6 +548,13 @@ class ChatStore {
                 "'</span>으로 이관 하였습니다",
               ok: () => {
                 runInAction(() => {
+                  let roomInfo = response.data;
+                  if (
+                    this.currentRoomInfo &&
+                    this.currentRoomInfo.id === roomInfo.id
+                  ) {
+                    this.currentRoomInfo = roomInfo;
+                  }
                   if (selectInfo.id) {
                     this.currentRoomTabName = Constant.ROOM_TYPE_ING;
                   } else {
@@ -560,10 +574,21 @@ class ChatStore {
   // 방 선택
   @action
   selectRoom(roomInfo) {
-    // TODO : 메시지 목록을 api로 가져온다
     if (!this.currentRoomInfo || this.currentRoomInfo.id !== roomInfo.id) {
       this.currentRoomInfo = roomInfo;
       this.messageList = [];
+      ApiService.get('message', {
+        params: { queryId: 'findByRoomIdAll', roomId: this.currentRoomInfo.id }
+      }).then(response => {
+        let data = response.data;
+        runInAction(() => {
+          this.messageList = data;
+          setTimeout(() => {
+            Helper.scrollBottomByDivId('messageListScroll', 500);
+            this.search();
+          }, 500);
+        });
+      });
     }
     this.selectTemplateId = null;
   }
@@ -856,10 +881,17 @@ class ChatStore {
   @computed
   get viewBottomArea() {
     // 현재 방의 담당자이고 방의 상태가 종료가 아닌 경우에만 보이게끔
-    let display = true;
+    let display = false;
     let currentRoomInfo = this.currentRoomInfo;
+    let { memberId } = currentRoomInfo;
     let { profile } = this.rootStore.appStore;
-    let { companyId, speakerId } = profile;
+    let { loginId } = profile;
+    if (
+      currentRoomInfo.state < Constant.ROOM_STATE_CLOSE &&
+      loginId === memberId
+    ) {
+      display = true;
+    }
     return display;
   }
 

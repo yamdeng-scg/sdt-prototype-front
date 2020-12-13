@@ -73,4 +73,9 @@ Constant.MEMBER_AUTH_EMP = 4;
 Constant.MEMBER_AUTH_READER = 7;
 Constant.MEMBER_AUTH_GUEST = 9;
 
+// link_protocol : app, web, tel
+Constant.LINK_PROTOCOL_APP = 'app';
+Constant.LINK_PROTOCOL_WEB = 'web';
+Constant.LINK_PROTOCOL_TEL = 'tel';
+
 export default Constant;

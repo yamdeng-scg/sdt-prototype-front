@@ -223,6 +223,41 @@ const convertMessageDateToString = function(createDate) {
   }
 };
 
+const addCategoryList = function(list, info, parent) {
+  if (info.children) {
+    addCategoryListArray(list, info.children, info);
+    list.push({
+      key: info.key,
+      title: info.title,
+      level: info.level,
+      parentKey: parent ? parent.key : null
+    });
+  } else {
+    list.push({
+      key: info.key,
+      title: info.title,
+      level: info.level,
+      parentKey: parent ? parent.key : null
+    });
+  }
+};
+
+const addCategoryListArray = function(list, children, parent) {
+  children.forEach(treeInfo => {
+    addCategoryList(list, treeInfo, parent);
+  });
+};
+
+const addExpandedKeys = function(allList, resultKeys, info) {
+  resultKeys.push(info.key);
+  if (info.level !== 1) {
+    let searchIndex = _.findIndex(allList, tree => {
+      return tree.key === info.parentKey;
+    });
+    addExpandedKeys(allList, resultKeys, allList[searchIndex]);
+  }
+};
+
 const Helper = {
   convertEmptyValue: convertEmptyValue,
   copyToClipboard: copyToClipboard,
@@ -241,7 +276,10 @@ const Helper = {
   checkImageFileUploadExtension: checkImageFileUploadExtension,
   getTodayString: getTodayString,
   convertStringBySecond: convertStringBySecond,
-  convertMessageDateToString: convertMessageDateToString
+  convertMessageDateToString: convertMessageDateToString,
+  addCategoryList: addCategoryList,
+  addCategoryListArray: addCategoryListArray,
+  addExpandedKeys: addExpandedKeys
 };
 
 export default Helper;

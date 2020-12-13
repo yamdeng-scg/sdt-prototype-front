@@ -1,125 +1,170 @@
 import React from 'react';
+import { observer, inject } from 'mobx-react';
+import { withRouter } from 'react-router-dom';
 import { Row, Col, Tree, Input } from 'antd';
 import { StarFilled, StarOutlined, CaretDownOutlined } from '@ant-design/icons';
+import ApiService from '../../services/ApiService';
+import Helper from '../../utils/Helper';
+import _ from 'lodash';
 
-const x = 10;
-const y = 2;
-const z = 1;
-const gData = [];
-
-const generateData = (_level, _preKey, _tns) => {
-  const preKey = _preKey || '0';
-  const tns = _tns || gData;
-
-  const children = [];
-  for (let i = 0; i < x; i++) {
-    const key = `${preKey}-${i}`;
-    tns.push({ title: key, key });
-    if (i < y) {
-      children.push(key);
-    }
+const replaceHighLighText = function(message, searchValue) {
+  let resultMessage = message;
+  if (searchValue) {
+    var regEx = new RegExp(searchValue, 'g');
+    resultMessage = message.replace(
+      regEx,
+      '<span class="bg-yellow color-black">' + searchValue + '</span>'
+    );
   }
-  if (_level < 0) {
-    return tns;
-  }
-  const level = _level - 1;
-  children.forEach((key, index) => {
-    tns[index].children = [];
-    return generateData(level, key, tns[index].children);
-  });
+  return resultMessage;
 };
-generateData(z);
 
+@withRouter
+@inject('appStore', 'uiStore', 'chatStore')
+@observer
 class ChatAreaBottomReplySearch extends React.Component {
-  state = {
-    gData,
-    expandedKeys: ['0-0', '0-0-0', '0-0-0-0']
-  };
-
-  onDragEnter = info => {
-    // console.log(info);
-    // expandedKeys 需要受控时设置
-    // this.setState({
-    //   expandedKeys: info.expandedKeys,
-    // });
-  };
-
-  onDrop = info => {
-    // console.log(info);
-    const dropKey = info.node.props.eventKey;
-    const dragKey = info.dragNode.props.eventKey;
-    const dropPos = info.node.props.pos.split('-');
-    const dropPosition =
-      info.dropPosition - Number(dropPos[dropPos.length - 1]);
-
-    const loop = (data, key, callback) => {
-      for (let i = 0; i < data.length; i++) {
-        if (data[i].key === key) {
-          return callback(data[i], i, data);
-        }
-        if (data[i].children) {
-          loop(data[i].children, key, callback);
-        }
-      }
+  categoryAllList = [];
+  constructor(props) {
+    super(props);
+    this.state = {
+      expandedKeys: [],
+      treeData: [],
+      templateList: [],
+      filterList: [],
+      searchValue: '',
+      selectTreeInfo: null
     };
-    const data = [...this.state.gData];
+    this.treeRef = React.createRef();
+    this.changeSearchValue = this.changeSearchValue.bind(this);
+    this.changeFavortie = this.changeFavortie.bind(this);
+    this.search = this.search.bind(this);
+  }
 
-    // Find dragObject
-    let dragObj;
-    loop(data, dragKey, (item, index, arr) => {
-      arr.splice(index, 1);
-      dragObj = item;
+  onSelect = (selectedKeys, tree) => {
+    let info = tree.node.info;
+    this.setState(
+      {
+        selectTreeInfo: info
+      },
+      () => {
+        this.search();
+      }
+    );
+  };
+
+  onExpand = expandedKeys => {
+    this.setState({
+      expandedKeys,
+      autoExpandParent: false
     });
+  };
 
-    if (!info.dropToGap) {
-      // Drop on the content
-      loop(data, dropKey, item => {
-        item.children = item.children || [];
-        // where to insert 示例添加到尾部，可以是随意位置
-        item.children.push(dragObj);
-      });
-    } else if (
-      (info.node.props.children || []).length > 0 && // Has children
-      info.node.props.expanded && // Is expanded
-      dropPosition === 1 // On the bottom gap
-    ) {
-      loop(data, dropKey, item => {
-        item.children = item.children || [];
-        // where to insert 示例添加到头部，可以是随意位置
-        item.children.unshift(dragObj);
-      });
+  search() {
+    let { selectTreeInfo } = this.state;
+    let apiUrl = 'template/findAll';
+    let apiParam = {};
+    if (selectTreeInfo.level === 0) {
+      apiUrl = 'template/findAll';
     } else {
-      let ar;
-      let i;
-      loop(data, dropKey, (item, index, arr) => {
-        ar = arr;
-        i = index;
-      });
-      if (dropPosition === -1) {
-        ar.splice(i, 0, dragObj);
-      } else {
-        ar.splice(i + 1, 0, dragObj);
+      if (selectTreeInfo.level === 1) {
+        apiUrl = 'template/findByCategoryLargeId';
+        apiParam.categoryLargeId = selectTreeInfo.id;
+      } else if (selectTreeInfo.level === 2) {
+        apiUrl = 'template/findByCategoryMiddleId';
+        apiParam.categoryMiddleId = selectTreeInfo.id;
+      } else if (selectTreeInfo.level === 3) {
+        apiUrl = 'template/findByCategorySmallId';
+        apiParam.categorySmallId = selectTreeInfo.id;
       }
     }
-
-    this.setState({
-      gData: data
+    ApiService.post(apiUrl, apiParam).then(response => {
+      let data = response.data;
+      this.setState({ searchValue: '', templateList: data, filterList: data });
     });
-  };
+  }
+
+  changeSearchValue(value) {
+    let { templateList } = this.state;
+    let filterList = _.filter(templateList, info => {
+      return info.reply.indexOf(value) !== -1;
+    });
+    if (!value) {
+      filterList = templateList;
+    }
+    this.setState({ searchValue: value, filterList: filterList });
+  }
+
+  changeFavortie(templateId, isFavortie) {
+    ApiService.put('template/' + templateId + '/favorite', {
+      value: isFavortie ? false : true
+    }).then(() => {
+      this.search();
+    });
+  }
+
+  componentDidMount() {
+    ApiService.get('category/tree').then(response => {
+      let data = response.data;
+      this.categoryAllList = [];
+      data.forEach(treeInfo => {
+        Helper.addCategoryList(this.categoryAllList, treeInfo);
+      });
+      let rootTreeInfo = {
+        title: '전체',
+        key: '0',
+        children: data,
+        level: 0
+      };
+      let treeData = [rootTreeInfo];
+      let expandedKeys = ['0'];
+      this.setState(
+        {
+          treeData: treeData,
+          expandedKeys: expandedKeys,
+          selectTreeInfo: rootTreeInfo
+        },
+        () => {
+          this.search();
+        }
+      );
+    });
+  }
 
   render() {
+    let { chatStore } = this.props;
+    let { treeData, expandedKeys, filterList, searchValue } = this.state;
+    const loop = data =>
+      data.map(item => {
+        const title = <span>{item.title}</span>;
+        if (item.children) {
+          return {
+            title,
+            key: item.key,
+            level: item.level,
+            info: item,
+            children: loop(item.children)
+          };
+        }
+
+        return {
+          title,
+          key: item.key,
+          level: item.level,
+          info: item
+        };
+      });
+
     return (
       <Row>
         <Col span={10} className="bor-right">
           <Tree
             style={{ overflowY: 'auto', height: 450 }}
             className="draggable-tree"
-            defaultExpandedKeys={this.state.expandedKeys}
-            draggable
             blockNode
-            onDragEnter={this.onDragEnter}
-            onDrop={this.onDrop}
-            treeData={this.state.gData}
+            treeData={loop(treeData)}
+            expandedKeys={expandedKeys}
+            onSelect={this.onSelect}
+            onExpand={this.onExpand}
             switcherIcon={
               <CaretDownOutlined style={{ fontSize: '16px', color: 'gray' }} />
             }
@@ -127,7 +172,14 @@ class ChatAreaBottomReplySearch extends React.Component {
         </Col>
         <Col span={14}>
           <div style2={{ padding: '10px 10px 0px 10px' }} className="pd10">
-            <Input allowClear placeholder="검색어를 입력해주세요" />
+            <Input
+              allowClear
+              placeholder="검색어를 입력해주세요"
+              value={searchValue}
+              onChange={event => {
+                this.changeSearchValue(event.target.value);
+              }}
+            />
           </div>
           <div
             style={{
@@ -137,7 +189,16 @@ class ChatAreaBottomReplySearch extends React.Component {
               height: 400
             }}
           >
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((info, index) => {
+            {filterList.map(info => {
+              let {
+                id,
+                reply,
+                isFavortie,
+                link,
+                linkText,
+                linkProtocol
+              } = info;
+              let replyHtml = replaceHighLighText(reply, searchValue);
               return (
                 <div>
                   <div
@@ -146,8 +207,17 @@ class ChatAreaBottomReplySearch extends React.Component {
                       width: '10%'
                     }}
                   >
-                    {/* <StarFilled className="color-basic" /> */}
-                    <StarOutlined className="color-basic font-em2" />
+                    {isFavortie ? (
+                      <StarFilled
+                        className="color-basic"
+                        onClick={() => this.changeFavortie(id, isFavortie)}
+                      />
+                    ) : (
+                      <StarOutlined
+                        className="color-basic font-em2"
+                        onClick={() => this.changeFavortie(id, isFavortie)}
+                      />
+                    )}
                   </div>
                   <div
                     className="bg-gray pd10 mrb10 inblock text"
@@ -155,8 +225,22 @@ class ChatAreaBottomReplySearch extends React.Component {
                       borderRadius: 10,
                       width: '90%'
                     }}
+                    onClick={() => chatStore.appendMessage(reply)}
                   >
-                    <p>답변입니당{index}</p>
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html: replyHtml
+                      }}
+                    />
+                    <div
+                      onClick={event => {
+                        event.stopPropagation();
+                        chatStore.sendLinkMessage(link, linkText, linkProtocol);
+                      }}
+                      className={link ? '' : 'none'}
+                    >
+                      {linkText}
+                    </div>
                   </div>
                 </div>
               );

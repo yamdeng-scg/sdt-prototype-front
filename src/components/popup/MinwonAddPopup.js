@@ -3,43 +3,9 @@ import { observer, inject } from 'mobx-react';
 import { Row, Col, Input, Tree, Button } from 'antd';
 import { CaretDownOutlined, SearchOutlined } from '@ant-design/icons';
 import ApiService from '../../services/ApiService';
+import Helper from '../../utils/Helper';
 import _ from 'lodash';
 const TextArea = Input.TextArea;
-const addCategoryList = function(list, info, parent) {
-  if (info.children) {
-    addCategoryListArray(list, info.children, info);
-    list.push({
-      key: info.key,
-      title: info.title,
-      level: info.level,
-      parentKey: parent ? parent.key : null
-    });
-  } else {
-    list.push({
-      key: info.key,
-      title: info.title,
-      level: info.level,
-      parentKey: parent ? parent.key : null
-    });
-  }
-};
-
-const addCategoryListArray = function(list, children, parent) {
-  children.forEach(treeInfo => {
-    addCategoryList(list, treeInfo, parent);
-  });
-};
-
-const addExpandedKeys = function(allList, resultKeys, info) {
-  resultKeys.push(info.key);
-  if (info.level !== 1) {
-    let searchIndex = _.findIndex(allList, tree => {
-      return tree.key === info.parentKey;
-    });
-    addExpandedKeys(allList, resultKeys, allList[searchIndex]);
-  }
-};
-
 @inject('alertModalStore')
 @observer
 class MinwonAddPopup extends React.Component {
@@ -67,7 +33,7 @@ class MinwonAddPopup extends React.Component {
         return info.title.indexOf(value) !== -1;
       });
       findList.forEach(info => {
-        addExpandedKeys(this.categoryAllList, expandedKeys, info);
+        Helper.addExpandedKeys(this.categoryAllList, expandedKeys, info);
       });
       if (findList.length) {
         let findKeys = findList.map(info => info.key);
@@ -115,11 +81,11 @@ class MinwonAddPopup extends React.Component {
   }
 
   componentDidMount() {
-    ApiService.get('category/tree').then(response => {
+    ApiService.get('category/tree/minwon').then(response => {
       let data = response.data;
       this.categoryAllList = [];
       data.forEach(treeInfo => {
-        addCategoryList(this.categoryAllList, treeInfo);
+        Helper.addCategoryList(this.categoryAllList, treeInfo);
       });
       let treeData = data;
       let expandedKeys = [];
@@ -239,7 +205,6 @@ class MinwonAddPopup extends React.Component {
           <Row>
             <Col span={8}>
               <Tree
-                draggable
                 ref={this.treeRef}
                 height={350}
                 className="draggable-tree"

@@ -307,6 +307,33 @@ class ChatStore {
   @action
   appendMessage(message) {
     this.message = this.message + message;
+  }
+
+  @action
+  sendLinkMessage(linkUrl, linkText, linkProtocol) {
+    let { profile } = this.rootStore.appStore;
+    let { companyId, speakerId } = profile;
+    let roomId = this.currentRoomInfo.id;
+    let messageType = Constant.MESSAGE_TYPE_LINK;
+    if (linkProtocol === Constant.LINK_PROTOCOL_TEL) {
+      messageType = Constant.MESSAGE_TYPE_TEL;
+    } else if (linkProtocol === Constant.LINK_PROTOCOL_WEB) {
+      linkText = linkUrl;
+    }
+    let socketParam = {
+      companyId: companyId,
+      speakerId: speakerId,
+      roomId: roomId,
+      isEmployee: 1,
+      templateId: this.selectTemplateId,
+      messageType: messageType,
+      isSystemMessage: 0,
+      messageAdminType: 0,
+      messageDetail: linkText,
+      message: linkUrl
+    };
+    SocketService.sendMessage(this.socket, socketParam);
+    this.selectTemplateId = null;
     this.message = '';
   }
 
@@ -676,7 +703,7 @@ class ChatStore {
   @action
   openJoinHistoryPopup() {
     let currentRoomInfo = this.currentRoomInfo;
-    if (currentRoomInfo.minwonHistoryCount) {
+    if (currentRoomInfo.joinHistoryCount) {
       ModalService.openMiddlePopup(ModalType.JOIN_HISTORY_POPUP, {
         customerName: currentRoomInfo.customerName,
         chatid: currentRoomInfo.chatid,

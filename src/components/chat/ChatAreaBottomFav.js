@@ -1,14 +1,74 @@
 import React from 'react';
 import { Row, Col, Input } from 'antd';
+import { observer, inject } from 'mobx-react';
+import { withRouter } from 'react-router-dom';
 import { StarFilled, StarOutlined } from '@ant-design/icons';
+import ApiService from '../../services/ApiService';
+import _ from 'lodash';
 
+const replaceHighLighText = function(message, searchValue) {
+  let resultMessage = message;
+  if (searchValue) {
+    var regEx = new RegExp(searchValue, 'g');
+    resultMessage = message.replace(
+      regEx,
+      '<span class="bg-yellow color-black">' + searchValue + '</span>'
+    );
+  }
+  return resultMessage;
+};
+
+@withRouter
+@inject('appStore', 'uiStore', 'chatStore')
+@observer
 class ChatAreaBottomFav extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = {
+      templateList: [],
+      filterList: [],
+      searchValue: ''
+    };
+    this.changeSearchValue = this.changeSearchValue.bind(this);
+    this.changeFavortie = this.changeFavortie.bind(this);
+    this.search = this.search.bind(this);
+  }
+
+  search() {
+    let apiUrl = 'template/findAll';
+    let apiParam = { checkFavorite: 1 };
+    ApiService.post(apiUrl, apiParam).then(response => {
+      let data = response.data;
+      this.setState({ searchValue: '', templateList: data, filterList: data });
+    });
+  }
+
+  changeSearchValue(value) {
+    let { templateList } = this.state;
+    let filterList = _.filter(templateList, info => {
+      return info.reply.indexOf(value) !== -1;
+    });
+    if (!value) {
+      filterList = templateList;
+    }
+    this.setState({ searchValue: value, filterList: filterList });
+  }
+
+  changeFavortie(templateId, isFavortie) {
+    ApiService.put('template/' + templateId + '/favorite', {
+      value: isFavortie ? false : true
+    }).then(() => {
+      this.search();
+    });
+  }
+
+  componentDidMount() {
+    this.search();
   }
 
   render() {
+    let { chatStore } = this.props;
+    let { filterList, searchValue } = this.state;
     return (
       <Row>
         <Col span={24}>
@@ -17,6 +77,10 @@ class ChatAreaBottomFav extends React.Component {
               style={{ maxWidth: '90%' }}
               allowClear
               placeholder="검색어를 입력해주세요"
+              value={searchValue}
+              onChange={event => {
+                this.changeSearchValue(event.target.value);
+              }}
             />
           </div>
           <div
@@ -27,7 +91,16 @@ class ChatAreaBottomFav extends React.Component {
               height: 400
             }}
           >
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((info, index) => {
+            {filterList.map(info => {
+              let {
+                id,
+                reply,
+                isFavortie,
+                link,
+                linkText,
+                linkProtocol
+              } = info;
+              let replyHtml = replaceHighLighText(reply, searchValue);
               return (
                 <div>
                   <div
@@ -37,8 +110,17 @@ class ChatAreaBottomFav extends React.Component {
                       paddingRight: 5
                     }}
                   >
-                    {/* <StarFilled className="color-basic" /> */}
-                    <StarOutlined className="color-basic font-em2" />
+                    {isFavortie ? (
+                      <StarFilled
+                        className="color-basic"
+                        onClick={() => this.changeFavortie(id, isFavortie)}
+                      />
+                    ) : (
+                      <StarOutlined
+                        className="color-basic font-em2"
+                        onClick={() => this.changeFavortie(id, isFavortie)}
+                      />
+                    )}
                   </div>
                   <div
                     style={{
@@ -46,8 +128,22 @@ class ChatAreaBottomFav extends React.Component {
                       width: '90%'
                     }}
                     className="bg-gray pd10 mrb10 inblock"
+                    onClick={() => chatStore.appendMessage(reply)}
                   >
-                    <p>답변입니당{index}</p>
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html: replyHtml
+                      }}
+                    />
+                    <div
+                      onClick={event => {
+                        event.stopPropagation();
+                        chatStore.sendLinkMessage(link, linkText, linkProtocol);
+                      }}
+                      className={link ? '' : 'none'}
+                    >
+                      {linkText}
+                    </div>
                   </div>
                 </div>
               );

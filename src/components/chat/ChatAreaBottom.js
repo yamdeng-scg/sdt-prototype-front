@@ -19,14 +19,28 @@ class ChatAreaBottom extends React.Component {
 
   render() {
     let { chatStore } = this.props;
-    let { bottmActiveTabIndex, displayBottomContent } = chatStore;
+    let {
+      bottmActiveTabIndex,
+      displayBottomContent,
+      swearCount,
+      insultCount
+    } = chatStore;
+    // swearCount, insultCount, handleSendWarningMessage
     let applyBottomTabComponent = <ChatAreaBottomReplySearch />;
     if (bottmActiveTabIndex === 1) {
       applyBottomTabComponent = <ChatAreaBottomFav />;
     } else if (bottmActiveTabIndex === 2) {
       applyBottomTabComponent = <ChatAreaBottomLink />;
     } else if (bottmActiveTabIndex === 3) {
-      applyBottomTabComponent = <ChatAreaBottomWarning />;
+      applyBottomTabComponent = (
+        <ChatAreaBottomWarning
+          swearCount={swearCount}
+          insultCount={insultCount}
+          handleSendWarningMessage={(message, warnMessageType) => {
+            chatStore.sendWarningMessage(message, warnMessageType);
+          }}
+        />
+      );
     }
     if (!displayBottomContent) {
       applyBottomTabComponent = null;

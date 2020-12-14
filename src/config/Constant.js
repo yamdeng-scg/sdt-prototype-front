@@ -78,4 +78,7 @@ Constant.LINK_PROTOCOL_APP = 'app';
 Constant.LINK_PROTOCOL_WEB = 'web';
 Constant.LINK_PROTOCOL_TEL = 'tel';
 
+Constant.WARN_MESSAGE_TYPE_SWEAR = 1;
+Constant.WARN_MESSAGE_TYPE_INSULT = 2;
+
 export default Constant;

@@ -73,11 +73,15 @@ class MessageList extends React.Component {
                 position: 'relative',
                 borderRadius: '13px 0px 13px 13px',
                 backgroundColor:
-                  messageType === Constant.MESSAGE_TYPE_LINK
+                  messageType === Constant.MESSAGE_TYPE_LINK ||
+                  messageType === Constant.MESSAGE_TYPE_TEL
                     ? 'orange'
                     : '#78c0fd',
                 fontWeight:
-                  messageType === Constant.MESSAGE_TYPE_LINK ? 'bold' : '',
+                  messageType === Constant.MESSAGE_TYPE_LINK ||
+                  messageType === Constant.MESSAGE_TYPE_TEL
+                    ? 'bold'
+                    : '',
                 textAlign: 'left',
                 padding: '11px 15px 9px',
                 color: '#fff',
@@ -160,11 +164,15 @@ class MessageList extends React.Component {
                 position: 'relative',
                 borderRadius: '13px 0px 13px 13px',
                 backgroundColor:
-                  messageType === Constant.MESSAGE_TYPE_LINK
+                  messageType === Constant.MESSAGE_TYPE_LINK ||
+                  messageType === Constant.MESSAGE_TYPE_TEL
                     ? 'orange'
                     : '#78c0fd',
                 fontWeight:
-                  messageType === Constant.MESSAGE_TYPE_LINK ? 'bold' : '',
+                  messageType === Constant.MESSAGE_TYPE_LINK ||
+                  messageType === Constant.MESSAGE_TYPE_TEL
+                    ? 'bold'
+                    : '',
                 textAlign: 'left',
                 padding: '11px 15px 9px',
                 color: '#fff',

@@ -194,7 +194,7 @@ class ChatAreaBottomReplySearch extends React.Component {
                 id,
                 reply,
                 isFavortie,
-                link,
+                linkUrl,
                 linkText,
                 linkProtocol
               } = info;
@@ -235,9 +235,13 @@ class ChatAreaBottomReplySearch extends React.Component {
                     <div
                       onClick={event => {
                         event.stopPropagation();
-                        chatStore.sendLinkMessage(link, linkText, linkProtocol);
+                        chatStore.sendLinkMessage(
+                          linkUrl,
+                          linkText,
+                          linkProtocol
+                        );
                       }}
-                      className={link ? '' : 'none'}
+                      className={linkUrl ? '' : 'none'}
                     >
                       {linkText}
                     </div>

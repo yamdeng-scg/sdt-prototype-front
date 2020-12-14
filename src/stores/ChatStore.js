@@ -21,9 +21,6 @@ class ChatStore {
   // 현재 선택한 방 정보
   @observable currentRoomInfo = null;
 
-  // 현재 선택한 계약정보
-  @observable currentContractInfo = null;
-
   // 하단 탭 active index
   @observable bottmActiveTabIndex = -1;
 
@@ -91,6 +88,32 @@ class ChatStore {
   currentSearchIndex = -1;
 
   searchApplyArray = [];
+
+  @observable
+  swearCount = 0;
+
+  @observable
+  insultCount = 0;
+
+  @observable contractList = [];
+
+  @observable cash = 0;
+
+  // 현재 선택한 계약정보
+  @observable currentContractInfo = null;
+
+  @observable currentBiilInfo = null;
+
+  @observable useContractNum = '';
+
+  @observable billHistoryMonthList = [];
+
+  @action
+  changeCurrentRoomInfo(roomInfo) {
+    this.currentRoomInfo = roomInfo;
+    this.swearCount = roomInfo.swearCount;
+    this.insultCount = roomInfo.insultCount;
+  }
 
   @computed
   get disabledNextButton() {
@@ -275,11 +298,11 @@ class ChatStore {
       roomId: roomId,
       isEmployee: 1,
       templateId: this.selectTemplateId,
-      messageType: Constant.MESSAGE_TYPE_LINK,
+      messageType: Constant.MESSAGE_TYPE_NORMAL,
       isSystemMessage: 1,
       messageAdminType: 0,
-      messageDetail: message,
-      message: null
+      messageDetail: null,
+      message: message
     };
     SocketService.sendMessage(this.socket, socketParam);
     this.selectTemplateId = null;
@@ -351,7 +374,7 @@ class ChatStore {
             let updateCurrentRoomInfo = update(this.currentRoomInfo, {
               $merge: { isBlockCustomer: data.isBlock }
             });
-            this.currentRoomInfo = updateCurrentRoomInfo;
+            this.changeCurrentRoomInfo(updateCurrentRoomInfo);
             let bodyText = '관심고객이 해제되었습니다';
             if (blockType) {
               bodyText = '관심고객으로 지정되었습니다';
@@ -499,7 +522,7 @@ class ChatStore {
         runInAction(() => {
           let data = response.data;
           SocketService.join(this.socket, data.id, speakerId);
-          this.currentRoomInfo = data;
+          this.changeCurrentRoomInfo(data);
           this.currentRoomTabName = Constant.ROOM_TYPE_ING;
           this.search();
         });
@@ -510,12 +533,55 @@ class ChatStore {
         runInAction(() => {
           let data = response.data;
           SocketService.join(this.socket, data.id, speakerId);
-          this.currentRoomInfo = data;
+          this.changeCurrentRoomInfo(data);
           this.currentRoomTabName = Constant.ROOM_TYPE_ING;
         });
       });
     }
+    this.loadContractList(roomInfo.gasappMemberNumber);
     this.selectTemplateId = null;
+  }
+
+  @action
+  loadContractList(gasappMemberNumber) {
+    ApiService.get('contract', {
+      params: { member: gasappMemberNumber }
+    }).then(response => {
+      let data = response.data;
+      let contracts = data.contracts || [];
+      runInAction(() => {
+        this.cash = data.cash || 0;
+        contracts.push({
+          displayName: '직접입력',
+          value: '직접입력'
+        });
+        this.contractList = contracts;
+      });
+      if (contracts && contracts.length) {
+        let searchIndex = _.findIndex(contracts, info => {
+          return info.main === 'Y';
+        });
+        if (searchIndex === -1) {
+          searchIndex = 0;
+        }
+        let mainContractInfo = contracts[searchIndex];
+        ApiService.get('contract/' + mainContractInfo.useContractNum).then(
+          response => {
+            runInAction(() => {
+              let data = response.data;
+              if (response.status === 204) {
+                this.currentContractInfo = null;
+                this.currentBiilInfo = null;
+                this.billHistoryMonthList = [];
+              } else {
+                this.currentContractInfo = data.contractInfo;
+                this.currentBiilInfo = data.bill;
+              }
+            });
+          }
+        );
+      }
+    });
   }
 
   @action
@@ -535,7 +601,7 @@ class ChatStore {
                   this.currentRoomInfo &&
                   this.currentRoomInfo.id === roomInfo.id
                 ) {
-                  this.currentRoomInfo = roomInfo;
+                  this.changeCurrentRoomInfo(roomInfo);
                 }
                 if (
                   this.socket &&
@@ -580,7 +646,7 @@ class ChatStore {
                     this.currentRoomInfo &&
                     this.currentRoomInfo.id === roomInfo.id
                   ) {
-                    this.currentRoomInfo = roomInfo;
+                    this.changeCurrentRoomInfo(roomInfo);
                   }
                   if (selectInfo.id) {
                     this.currentRoomTabName = Constant.ROOM_TYPE_ING;
@@ -602,7 +668,7 @@ class ChatStore {
   @action
   selectRoom(roomInfo) {
     if (!this.currentRoomInfo || this.currentRoomInfo.id !== roomInfo.id) {
-      this.currentRoomInfo = roomInfo;
+      this.changeCurrentRoomInfo(roomInfo);
       this.messageList = [];
       ApiService.get('message', {
         params: { queryId: 'findByRoomIdAll', roomId: this.currentRoomInfo.id }
@@ -677,7 +743,7 @@ class ChatStore {
           ApiService.get('room/' + currentRoomInfo.id).then(response => {
             runInAction(() => {
               let data = response.data;
-              this.currentRoomInfo = data;
+              this.changeCurrentRoomInfo(data);
             });
           });
         });
@@ -781,7 +847,7 @@ class ChatStore {
     this.socket.on('welcome', this.onWelcome.bind(this));
     this.socket.on('message-list', this.onMessageList.bind(this));
     this.socket.on('message', this.onMessage.bind(this));
-    this.socket.on('error', this.onError.bind(this));
+    this.socket.on('app-error', this.onError.bind(this));
     this.socket.on('read-message', this.onReadMessage.bind(this));
     this.socket.on('receive-event', this.onReceiveEvent.bind(this));
   }
@@ -836,7 +902,7 @@ class ChatStore {
   }
 
   onError(error) {
-    console.log('error : ' + error);
+    message.error('socket error!');
   }
 
   @action
@@ -923,6 +989,25 @@ class ChatStore {
   }
 
   @action
+  sendWarningMessage(message, warnMessageType) {
+    if (warnMessageType === Constant.WARN_MESSAGE_TYPE_SWEAR) {
+      this.swearCount = this.swearCount + 1;
+    } else if (warnMessageType === Constant.WARN_MESSAGE_TYPE_INSULT) {
+      this.insultCount = this.insultCount + 1;
+    }
+    if (this.swearCount === 4 || this.insultCount === 4) {
+      this.swearCount = 0;
+      this.insultCount = 0;
+    }
+    let customerId = 0;
+    ApiService.put('customer/' + customerId, {
+      swearCount: this.swearCount,
+      insultCount: this.insultCount
+    });
+    this.sendSystemMessage(message);
+  }
+
+  @action
   clear() {
     this.disconnect();
     if (this.waitTimeRefreshIntervalHandler) {
@@ -930,7 +1015,6 @@ class ChatStore {
     }
 
     this.currentRoomInfo = null;
-    this.currentContractInfo = null;
     this.bottmActiveTabIndex = -1;
     this.currentRoomTabName = 'wait';
     this.readyRoomSort = Constant.READY_ROOM_SORT_WAIT_TIME;
@@ -958,6 +1042,14 @@ class ChatStore {
     this.applySearchContent = '';
     this.currentSearchIndex = -1;
     this.searchApplyArray = [];
+    this.swearCount = 0;
+    this.insultCount = 0;
+    this.contractList = [];
+    this.cash = 0;
+    this.currentContractInfo = null;
+    this.currentBiilInfo = null;
+    this.useContractNum = '';
+    this.billHistoryMonthList = [];
   }
 }
 

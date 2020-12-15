@@ -46,7 +46,7 @@ class MessageListTop extends React.Component {
             <span className="font-em2">ID : </span>
             <CopyToClipboard
               text={currentRoomInfo.chatid}
-              onCopy={() => alert('복사되었습니다')}
+              onCopy={() => alert('클립보드에 복사되었습니다')}
             >
               <span className="font-em2 text-under inblock mrr5">
                 {currentRoomInfo.chatid}

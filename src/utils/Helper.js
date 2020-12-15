@@ -27,7 +27,7 @@ function copyToClipboard(id) {
     textArea.select();
   }
   document.execCommand('copy');
-  alert('복사되었습니다');
+  alert('클립보드에 복사되었습니다');
 }
 
 // 로컬스토리지에 정보 save
@@ -258,6 +258,38 @@ const addExpandedKeys = function(allList, resultKeys, info) {
   }
 };
 
+// 회사별 사용계약번호 패턴 기준으로 각 자릿수 정보 가져오기
+function getLengthInfoByContractPattern(contractPattern) {
+  let contractLengthArray = contractPattern.split('-');
+  let firstContrcatLength = 0;
+  let secondContrcatLength = 0;
+  let thirdContrcatLength = 0;
+  let maxLength = 0;
+  if (contractLengthArray.length === 1) {
+    firstContrcatLength = Number(contractLengthArray[0]);
+    secondContrcatLength = 0;
+    thirdContrcatLength = 0;
+    maxLength = firstContrcatLength;
+  } else if (contractLengthArray.length === 2) {
+    firstContrcatLength = Number(contractLengthArray[0]);
+    secondContrcatLength = Number(contractLengthArray[1]);
+    thirdContrcatLength = 0;
+    maxLength = firstContrcatLength + secondContrcatLength + 1;
+  } else if (contractLengthArray.length === 3) {
+    firstContrcatLength = Number(contractLengthArray[0]);
+    secondContrcatLength = Number(contractLengthArray[1]);
+    thirdContrcatLength = Number(contractLengthArray[2]);
+    maxLength =
+      firstContrcatLength + secondContrcatLength + thirdContrcatLength + 2;
+  }
+  return {
+    firstContrcatLength: firstContrcatLength,
+    secondContrcatLength: secondContrcatLength,
+    thirdContrcatLength: thirdContrcatLength,
+    maxLength: maxLength
+  };
+}
+
 const Helper = {
   convertEmptyValue: convertEmptyValue,
   copyToClipboard: copyToClipboard,
@@ -279,7 +311,8 @@ const Helper = {
   convertMessageDateToString: convertMessageDateToString,
   addCategoryList: addCategoryList,
   addCategoryListArray: addCategoryListArray,
-  addExpandedKeys: addExpandedKeys
+  addExpandedKeys: addExpandedKeys,
+  getLengthInfoByContractPattern: getLengthInfoByContractPattern
 };
 
 export default Helper;

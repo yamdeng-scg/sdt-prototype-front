@@ -4,12 +4,14 @@ import moment from 'moment';
 import io from 'socket.io-client';
 import Constant from '../config/Constant';
 import ModalType from '../config/ModalType';
+import MessageTemplateType from '../config/MessageTemplateType';
 import Helper from '../utils/Helper';
 import ApiService from '../services/ApiService';
 import SocketService from '../services/SocketService';
 import ModalService from '../services/ModalService';
 import LoadingBar from '../utils/LoadingBar';
 import update from 'immutability-helper';
+import getCompanyConfig from '../config/Company';
 import _ from 'lodash';
 
 class ChatStore {
@@ -102,11 +104,66 @@ class ChatStore {
   // 현재 선택한 계약정보
   @observable currentContractInfo = null;
 
-  @observable currentBiilInfo = null;
+  @observable currentBillInfo = null;
 
   @observable useContractNum = '';
 
   @observable billHistoryMonthList = [];
+
+  @observable currentHistoryMonth = '';
+
+  @observable selectedContractInfo = null;
+
+  @observable virtualAccountList = [];
+
+  @observable currentVirtualAccount = null;
+
+  @action
+  applyContractPattern(companyId) {
+    let contractPattern = getCompanyConfig(companyId, 'contractPattern');
+    let lengthInfo = Helper.getLengthInfoByContractPattern(contractPattern);
+    this.firstContrcatLength = lengthInfo.firstContrcatLength;
+    this.secondContrcatLength = lengthInfo.secondContrcatLength;
+    this.thirdContrcatLength = lengthInfo.thirdContrcatLength;
+    this.maxLength = lengthInfo.maxLength;
+  }
+
+  @action
+  changeUseContractNum(inputUseContractNum) {
+    let inputUseContractNumLength = inputUseContractNum.length;
+    let beforeUseContractNum = this.useContractNum;
+    if (beforeUseContractNum.length > inputUseContractNumLength) {
+      // 삭제
+      if (inputUseContractNum.substr(inputUseContractNum.length - 1) === '-') {
+        inputUseContractNum = inputUseContractNum.substr(
+          0,
+          inputUseContractNum.length - 2
+        );
+      } else if (
+        beforeUseContractNum.substr(beforeUseContractNum.length - 1) === '-'
+      ) {
+        inputUseContractNum = inputUseContractNum.substr(
+          0,
+          inputUseContractNum.length - 1
+        );
+      }
+    } else {
+      // 추가
+      if (
+        this.secondContrcatLength &&
+        inputUseContractNumLength === this.firstContrcatLength
+      ) {
+        inputUseContractNum = inputUseContractNum + '-';
+      } else if (
+        this.thirdContrcatLength &&
+        inputUseContractNumLength ===
+          this.firstContrcatLength + this.secondContrcatLength + 1
+      ) {
+        inputUseContractNum = inputUseContractNum + '-';
+      }
+      this.useContractNum = inputUseContractNum;
+    }
+  }
 
   @action
   changeCurrentRoomInfo(roomInfo) {
@@ -549,38 +606,133 @@ class ChatStore {
     }).then(response => {
       let data = response.data;
       let contracts = data.contracts || [];
+      contracts.forEach(info => {
+        info.displayName =
+          info.alias +
+          ' ' +
+          info.useContractNum +
+          ' ' +
+          info.maskingAddress.address1 +
+          ' ' +
+          info.maskingAddress.address2;
+      });
       runInAction(() => {
         this.cash = data.cash || 0;
         contracts.push({
           displayName: '직접입력',
-          value: '직접입력'
+          useContractNum: '직접입력'
         });
         this.contractList = contracts;
-      });
-      if (contracts && contracts.length) {
-        let searchIndex = _.findIndex(contracts, info => {
-          return info.main === 'Y';
-        });
-        if (searchIndex === -1) {
-          searchIndex = 0;
-        }
-        let mainContractInfo = contracts[searchIndex];
-        ApiService.get('contract/' + mainContractInfo.useContractNum).then(
-          response => {
-            runInAction(() => {
-              let data = response.data;
-              if (response.status === 204) {
-                this.currentContractInfo = null;
-                this.currentBiilInfo = null;
-                this.billHistoryMonthList = [];
-              } else {
-                this.currentContractInfo = data.contractInfo;
-                this.currentBiilInfo = data.bill;
-              }
-            });
+        if (contracts && contracts.length) {
+          let searchIndex = _.findIndex(contracts, info => {
+            return info.main === 'Y';
+          });
+          if (searchIndex === -1) {
+            searchIndex = 0;
           }
-        );
+          let mainContractInfo = contracts[searchIndex];
+          this.selectedContractInfo = mainContractInfo;
+          this.loadContractInfo(mainContractInfo.useContractNum);
+        }
+      });
+    });
+  }
+
+  @action
+  loadContractInfo(useContractNum) {
+    if (!useContractNum) {
+      alert('사용계약번호를 입력해주세요');
+      return;
+    }
+    ApiService.get('contract/' + useContractNum).then(response => {
+      runInAction(() => {
+        let data = response.data;
+        if (response.status === 204) {
+          this.currentContractInfo = null;
+          this.currentBillInfo = null;
+          this.billHistoryMonthList = [];
+          this.currentHistoryMonth = '';
+        } else {
+          this.currentContractInfo = data.contractInfo;
+          this.currentBillInfo = data.bill;
+          let virtualAccount = data.bill.virtualAccount || {};
+          this.virtualAccountList = virtualAccount.accounts || [];
+          if (this.virtualAccountList.length) {
+            this.currentVirtualAccount = this.virtualAccountList[0];
+          }
+          let billHistory = data.history || [];
+          this.billHistoryMonthList = billHistory.map(info => {
+            return {
+              billMonth: info.requestYm + ':' + info.deadlineFlag,
+              displayName:
+                info.requestYm.substr(0, 4) +
+                '년 ' +
+                info.requestYm.substr(5, 2) +
+                '월'
+            };
+          });
+          if (billHistory.length) {
+            this.currentHistoryMonth = this.billHistoryMonthList[0].billMonth;
+          }
+        }
+      });
+    });
+  }
+
+  @action
+  changeContractInfo(useContractNum) {
+    this.useContractNum = '';
+    let searchIndex = _.findIndex(this.contractList, info => {
+      return info.useContractNum === useContractNum;
+    });
+    let contractInfo = this.contractList[searchIndex];
+    if (contractInfo.useContractNum === '직접입력') {
+      this.cash = 0;
+      this.currentContractInfo = null;
+      this.currentBillInfo = null;
+      this.billHistoryMonthList = [];
+      this.currentHistoryMonth = '';
+    } else {
+      if (
+        this.selectedContractInfo &&
+        this.selectedContractInfo.useContractNum !== contractInfo.useContractNum
+      ) {
+        this.loadContractInfo(contractInfo.useContractNum);
       }
+    }
+    this.selectedContractInfo = contractInfo;
+  }
+
+  @action
+  changeVirtualAccount(account) {
+    let searchIndex = _.findIndex(this.virtualAccountList, info => {
+      return info.account === account;
+    });
+    let virtualAccountInfo = this.virtualAccountList[searchIndex];
+    this.currentVirtualAccount = virtualAccountInfo;
+  }
+
+  @action
+  changeBillHistory(historyMonth) {
+    this.currentHistoryMonth = historyMonth;
+    ApiService.get(
+      'contract/' + this.currentContractInfo.useContractNum + '/bill',
+      {
+        params: {
+          requestYm: historyMonth.substr(0, 7),
+          deadlineFlag: historyMonth.substr(8, 2)
+        }
+      }
+    ).then(response => {
+      runInAction(() => {
+        let data = response.data;
+        this.currentBillInfo = data;
+        let virtualAccount = data.virtualAccount || {};
+        this.virtualAccountList = virtualAccount.accounts || [];
+        if (this.virtualAccountList.length) {
+          this.currentVirtualAccount = this.virtualAccountList[0];
+        }
+      });
     });
   }
 
@@ -601,14 +753,12 @@ class ChatStore {
                   this.currentRoomInfo &&
                   this.currentRoomInfo.id === roomInfo.id
                 ) {
-                  this.changeCurrentRoomInfo(roomInfo);
-                }
-                if (
-                  this.socket &&
-                  this.currentRoomInfo &&
-                  this.currentRoomInfo.id === roomInfo.id
-                ) {
-                  SocketService.leave(this.socket, roomInfo.id);
+                  // this.changeCurrentRoomInfo(roomInfo);
+                  this.currentRoomInfo = null;
+                  this.clearRoom();
+                  if (this.socket) {
+                    SocketService.leave(this.socket, roomInfo.id);
+                  }
                 }
                 this.currentRoomTabName = Constant.ROOM_TYPE_CLOSE;
                 this.search();
@@ -976,35 +1126,319 @@ class ChatStore {
     // 현재 방의 담당자이고 방의 상태가 종료가 아닌 경우에만 보이게끔
     let display = false;
     let currentRoomInfo = this.currentRoomInfo;
-    let { memberId } = currentRoomInfo;
-    let { profile } = this.rootStore.appStore;
-    let { loginId } = profile;
-    if (
-      currentRoomInfo.state < Constant.ROOM_STATE_CLOSE &&
-      loginId === memberId
-    ) {
-      display = true;
+    if (currentRoomInfo) {
+      let { memberId } = currentRoomInfo;
+      let { profile } = this.rootStore.appStore;
+      let { loginId } = profile;
+      if (
+        currentRoomInfo.state < Constant.ROOM_STATE_CLOSE &&
+        loginId === memberId
+      ) {
+        display = true;
+      }
     }
     return display;
   }
 
   @action
   sendWarningMessage(message, warnMessageType) {
+    let swearCount = this.swearCount;
+    let insultCount = this.insultCount;
+    let customerId = this.currentRoomInfo.customerId;
     if (warnMessageType === Constant.WARN_MESSAGE_TYPE_SWEAR) {
-      this.swearCount = this.swearCount + 1;
+      swearCount = this.swearCount + 1;
     } else if (warnMessageType === Constant.WARN_MESSAGE_TYPE_INSULT) {
-      this.insultCount = this.insultCount + 1;
+      insultCount = this.insultCount + 1;
     }
-    if (this.swearCount === 4 || this.insultCount === 4) {
-      this.swearCount = 0;
-      this.insultCount = 0;
+    if (swearCount === 3 || insultCount === 3) {
+      swearCount = 0;
+      insultCount = 0;
+      ApiService.post('room/' + this.currentRoomInfo.id + '/closeRoom').then(
+        response => {
+          ModalService.alert({
+            title: '상담종료',
+            body: '상담이 종료되었습니다',
+            ok: () => {
+              runInAction(() => {
+                let roomInfo = response.data;
+                if (this.socket) {
+                  SocketService.leave(this.socket, roomInfo.id);
+                }
+                this.currentRoomInfo = null;
+                this.clearRoom();
+                this.currentRoomTabName = Constant.ROOM_TYPE_CLOSE;
+                this.search();
+              });
+            }
+          });
+        }
+      );
     }
-    let customerId = 0;
-    ApiService.put('customer/' + customerId, {
-      swearCount: this.swearCount,
-      insultCount: this.insultCount
+    ApiService.put('customer/' + customerId + '/badTalkCount', {
+      swearCount: swearCount,
+      insultCount: insultCount
+    }).then(response => {
+      runInAction(() => {
+        this.swearCount = swearCount;
+        this.insultCount = insultCount;
+      });
     });
     this.sendSystemMessage(message);
+  }
+
+  @action
+  clearRoom() {
+    this.messageList = [];
+    this.message = '';
+    this.selectTemplateId = null;
+    this.searchContent = '';
+    this.applySearchContent = '';
+    this.currentSearchIndex = -1;
+    this.searchApplyArray = [];
+    this.swearCount = 0;
+    this.insultCount = 0;
+    this.contractList = [];
+    this.cash = 0;
+    this.currentContractInfo = null;
+    this.currentBillInfo = null;
+    this.useContractNum = '';
+    this.billHistoryMonthList = [];
+    this.currentHistoryMonth = '';
+    this.bottmActiveTabIndex = -1;
+    this.displayBottomContent = false;
+    this.displaySearchMessgeComponent = false;
+    this.selectedContractInfo = null;
+    this.virtualAccount = [];
+    this.currentVirtualAccount = null;
+  }
+
+  @action
+  sendMessageTemplate(type, var1, var2) {
+    let {
+      useContractNum,
+      customerName,
+      centerPhone,
+      address,
+      paymentType
+    } = this.currentContractInfo;
+    let addressStr = '';
+    if (address && address.address1) {
+      addressStr = address.address1 + ' ' + address.address2;
+    }
+    let {
+      paymentDeadline,
+      allPayAmounts,
+      chargeAmt,
+      basicRate,
+      useRate,
+      discountAmt,
+      replacementCost,
+      vat,
+      adjustmentAmt,
+      cutAmt,
+      previousUnpayAmounts,
+      previousUnpayInfos,
+      payMethod,
+      requestYm,
+      previousUnpayCount
+    } = this.currentBillInfo;
+    let cash = this.cash;
+    let firstPreviousUnpayInfo = null;
+    let secondPreviousUnpayInfo = null;
+    let firstPreviousUnpayRequestYm = '';
+    let secondPreviousUnpayRequestYm = '';
+
+    let previousUnpayInfoLength = previousUnpayInfos.length;
+    if (previousUnpayInfoLength) {
+      firstPreviousUnpayInfo = previousUnpayInfos[0];
+      firstPreviousUnpayRequestYm = Helper.convertDateToString(
+        firstPreviousUnpayInfo.requestYm,
+        'YYYYMMDD',
+        'YYYY년/MM월'
+      );
+      if (previousUnpayInfos.length > 1) {
+        secondPreviousUnpayInfo = previousUnpayInfos[1];
+        secondPreviousUnpayRequestYm = Helper.convertDateToString(
+          secondPreviousUnpayInfo.requestYm,
+          'YYYYMMDD',
+          'YYYY년/MM월'
+        );
+      }
+    }
+    let message = '';
+    if (type === MessageTemplateType.TYPE_1) {
+      // 1.주소 : $계약자 성명$ 고객님의 사용계약번호 $사용계약번호$ 기준 주소지는 $주소$ 입니다.
+      message = `${customerName} 고객님의 사용계약번호 ${useContractNum} 기준 주소지는 ${addressStr} 입니다.`;
+    } else if (type === MessageTemplateType.TYPE_2) {
+      // 2.최근계량기교체일 : $계약자 성명$ 고객님의 사용계약번호 $사용계약번호$ 기준 최근 계량기 교체일은 $최근계량기교체일 년/월/일$ 입니다.
+      message = `${customerName} 고객님의 사용계약번호 ${useContractNum} 기준 최근 계량기 교체일은 $최근계량기교체일 년/월/일$ 입니다.`;
+    } else if (type === MessageTemplateType.TYPE_3) {
+      // 3.최근안전점검일자(추가) : $계약자 성명$ 고객님의 사용계약번호 $사용계약번호$ 기준 최근 안전점검일자는 $최근 안전점검일자 년/월/일(적합or불합)$ 입니다.
+      message = `${customerName} 고객님의 사용계약번호 ${useContractNum} 기준 최근 안전점검일자는 $최근 안전점검일자 년/월/일(적합or불합)$ 입니다.`;
+    } else if (type === MessageTemplateType.TYPE_4) {
+      // 4.잔여캐시(추가) : $계약자 성명$ 고객님의 사용계약번호 $사용계약번호$ 기준 잔여캐시는 $잔여캐시$ 입니다.
+      message = `${customerName} 고객님의 사용계약번호 ${useContractNum} 기준 잔여캐시는 ${cash.toLocaleString()} 입니다.`;
+    } else if (type === MessageTemplateType.TYPE_5) {
+      // 5.해당고객센터(추가) : $계약자 성명$ 고객님의 사용계약번호 $사용계약번호$에 해당하는 고객센터 전화번호는 $고객센터$ 입니다.
+      message = `${customerName} 고객님의 사용계약번호 ${useContractNum}에 해당하는 고객센터 전화번호는 ${centerPhone} 입니다.`;
+    } else if (type === MessageTemplateType.TYPE_6) {
+      // 6.전체요약 : $계약자 성명$ 고객님의 사용계약번호 $사용계약번호$ 기준 $년/월$ 당월요금은 $당월소계$원, 미납요금은 $미납소계$원으로 총 청구요금은 $총청구요금$ 입니다.
+      message = `${customerName} 고객님의 사용계약번호 ${useContractNum} 기준 ${requestYm.substr(
+        0,
+        4
+      )}년/${requestYm.substr(
+        4,
+        2
+      )}월 당월요금은 ${chargeAmt.toLocaleString()}원, 미납요금은 ${previousUnpayAmounts.toLocaleString()}원으로 총 청구요금은 ${allPayAmounts.toLocaleString()}원 입니다.`;
+    } else if (type === MessageTemplateType.TYPE_7) {
+      // 7.납기일 : $계약자 성명$ 고객님의 사용계약번호 $사용계약번호$ 기준 $년/월$ 납부 마감일은 $납부마감일 년/월/일$ 입니다.
+      message = `${customerName} 고객님의 사용계약번호 ${useContractNum} 기준 ${requestYm.substr(
+        0,
+        4
+      )}년/${requestYm.substr(
+        4,
+        2
+      )}월 납부 마감일은 ${Helper.convertDateToString(
+        paymentDeadline,
+        'YYYYMMDD',
+        'YYYY년/MM월/DD일'
+      )} 입니다.`;
+    } else if (type === MessageTemplateType.TYPE_8) {
+      // 8.총 청구요금 : $계약자 성명$ 고객님의 사용계약번호 $사용계약번호$ 기준 $년/월$ 총 청구요금은 $총청구요금$원 입니다.
+      message = `${customerName} 고객님의 사용계약번호 ${useContractNum} 기준 ${requestYm.substr(
+        0,
+        4
+      )}년/${requestYm.substr(
+        4,
+        2
+      )}월 총 청구요금은 ${allPayAmounts.toLocaleString()}원 입니다.`;
+    } else if (type === MessageTemplateType.TYPE_9) {
+      // 9.당월소계 요약 : $계약자 성명$ 고객님의 사용계약번호 $사용계약번호$ 기준 $년/월$ 기본요금은 $기본요금$원, 사용요금 $사용요금$원, 감면금액 $감면금액$원, 계량기교체비용 $계량기교체비용$원, 부가세 $부가세$원, 정산금액 $정산금액$원, 절사금액 $절사금액$원으로 당월 총 요금은 $당월소계$원입니다.
+      message = `${customerName} 고객님의 사용계약번호 ${useContractNum} 기준 ${requestYm.substr(
+        0,
+        4
+      )}년/${requestYm.substr(
+        4,
+        2
+      )}월 기본요금은 ${basicRate.toLocaleString()}원, 사용요금 ${useRate.toLocaleString()}원, 감면금액 ${discountAmt.toLocaleString()}원, 계량기교체비용 ${replacementCost.toLocaleString()}원, 부가세 ${vat.toLocaleString()}원, 정산금액 ${adjustmentAmt.toLocaleString()}원, 절사금액 ${cutAmt.toLocaleString()}원으로 당월 총 요금은 ${chargeAmt.toLocaleString()}원입니다.`;
+    } else if (type === MessageTemplateType.TYPE_10) {
+      // 10.당월소계 : $계약자 성명$ 고객님의 사용계약번호 $사용계약번호$ 기준 $년/월$ 당월 요금은 $당월소계$원 입니다.
+      message = `${customerName} 고객님의 사용계약번호 ${useContractNum} 기준 ${requestYm.substr(
+        0,
+        4
+      )}년/${requestYm.substr(
+        4,
+        2
+      )}월 당월 요금은 ${chargeAmt.toLocaleString()}원 입니다.`;
+    } else if (type === MessageTemplateType.TYPE_11) {
+      // 11.기본요금 : $계약자 성명$ 고객님의 사용계약번호 $사용계약번호$ 기준 $년/월$ 기본요금은 $기본요금$원 입니다.
+      message = `${customerName} 고객님의 사용계약번호 ${useContractNum} 기준 ${Helper.convertDateToString(
+        requestYm,
+        'YYYYMMDD',
+        'YYYY년/MM월'
+      )} 기본요금은 ${basicRate.toLocaleString()}원 입니다.`;
+    } else if (type === MessageTemplateType.TYPE_12) {
+      // 12.사용요금 : $계약자 성명$ 고객님의 사용계약번호 $사용계약번호$ 기준 $년/월$ 사용요금은 $사용요금$원 입니다.
+      message = `${customerName} 고객님의 사용계약번호 ${useContractNum} 기준 ${Helper.convertDateToString(
+        requestYm,
+        'YYYYMMDD',
+        'YYYY년/MM월'
+      )} 사용요금은 ${useRate.toLocaleString()}원 입니다.`;
+    } else if (type === MessageTemplateType.TYPE_13) {
+      // 13.감면금액 : $계약자 성명$ 고객님의 사용계약번호 $사용계약번호$ 기준 $년/월$ 감면금액은 $감면금액$원 입니다.
+      message = `${customerName} 고객님의 사용계약번호 ${useContractNum} 기준 ${Helper.convertDateToString(
+        requestYm,
+        'YYYYMMDD',
+        'YYYY년/MM월'
+      )} 감면금액은 ${discountAmt.toLocaleString()}원 입니다.`;
+    } else if (type === MessageTemplateType.TYPE_14) {
+      // 14.계량기교체비용 : $계약자 성명$ 고객님의 사용계약번호 $사용계약번호$ 기준 $년/월$ 계량기 교체비용은 $계량기교체비용$원 입니다.
+      message = `${customerName} 고객님의 사용계약번호 ${useContractNum} 기준 ${Helper.convertDateToString(
+        requestYm,
+        'YYYYMMDD',
+        'YYYY년/MM월'
+      )} 계량기 교체비용은 ${replacementCost.toLocaleString()}원 입니다.`;
+    } else if (type === MessageTemplateType.TYPE_15) {
+      // 15.부가세 : $계약자 성명$ 고객님의 사용계약번호 $사용계약번호$ 기준 $년/월$ 부가세는 $부가세$원 입니다.
+      message = `${customerName} 고객님의 사용계약번호 ${useContractNum} 기준 ${Helper.convertDateToString(
+        requestYm,
+        'YYYYMMDD',
+        'YYYY년/MM월'
+      )} 부가세는 ${vat.toLocaleString()}원 입니다.`;
+    } else if (type === MessageTemplateType.TYPE_16) {
+      // 16.정산금액 : $계약자 성명$ 고객님의 사용계약번호 $사용계약번호$ 기준 $년/월$ 정산금액은 $정산금액$원 입니다.
+      message = `${customerName} 고객님의 사용계약번호 ${useContractNum} 기준 ${Helper.convertDateToString(
+        requestYm,
+        'YYYYMMDD',
+        'YYYY년/MM월'
+      )} 정산금액은 ${adjustmentAmt.toLocaleString()}원 입니다.`;
+    } else if (type === MessageTemplateType.TYPE_17) {
+      // 17.절사금액 : $계약자 성명$ 고객님의 사용계약번호 $사용계약번호$ 기준 $년/월$ 절사금액은 $절사금액$원 입니다.
+      message = `${customerName} 고객님의 사용계약번호 ${useContractNum} 기준 ${Helper.convertDateToString(
+        requestYm,
+        'YYYYMMDD',
+        'YYYY년/MM월'
+      )} 절사금액은 ${cutAmt.toLocaleString()}원 입니다.`;
+    } else if (type === MessageTemplateType.TYPE_18) {
+      // 18.미납소계 요약 : $계약자 성명$ 고객님의 사용계약번호 $사용계약번호$ 기준 $년/월$까지 $가장최근미납년/월$, $두번째최근미납년/월$ 등 $미납월수$회 미납하셔서 총 미납 요금은 $미납소계$원 입니다.
+      if (previousUnpayAmounts) {
+        message = `${customerName} 고객님의 사용계약번호 ${useContractNum} 기준 ${Helper.convertDateToString(
+          requestYm,
+          'YYYYMMDD',
+          'YYYY년/MM월'
+        )} ${Helper.convertDateToString(
+          requestYm,
+          'YYYYMMDD',
+          'YYYY년/MM월'
+        )}까지 가장최근미납 ${firstPreviousUnpayRequestYm}, $두번째최근미납 ${secondPreviousUnpayRequestYm} 등 ${previousUnpayCount}회 미납하셔서 총 미납 요금은 ${previousUnpayAmounts.toLocaleString()}원 입니다.`;
+      } else {
+        message = `${customerName} 고객님의 사용계약번호 ${useContractNum} 기준 ${Helper.convertDateToString(
+          requestYm,
+          'YYYYMMDD',
+          'YYYY년/MM월'
+        )}까지 미납요금이 없습니다.`;
+      }
+    } else if (type === MessageTemplateType.TYPE_19) {
+      // 19.미납소계 : $계약자 성명$ 고객님의 사용계약번호 $사용계약번호$ 기준 $년/월$까지의 미납요금은 $미납소계$원 입니다.
+      message = `${customerName} 고객님의 사용계약번호 ${useContractNum} 기준 ${Helper.convertDateToString(
+        requestYm,
+        'YYYYMMDD',
+        'YYYY년/MM월'
+      )}까지의 미납요금은 ${previousUnpayAmounts.toLocaleString()}원 입니다.`;
+    } else if (type === MessageTemplateType.TYPE_20) {
+      // 20.미납금액 : $계약자 성명$ 고객님의 사용계약번호 $사용계약번호$ 기준 $미납년/월$ 미납금액은 $미납금액$원 입니다.
+      message = `${customerName} 고객님의 사용계약번호 ${useContractNum} 기준 미납 ${Helper.convertDateToString(
+        var1,
+        'YYYYMMDD',
+        'YYYY년/MM월'
+      )} 미납금액은 ${var2.toLocaleString()}원 입니다.`;
+    } else if (type === MessageTemplateType.TYPE_21) {
+      // 21.납부상태 : $계약자 성명$ 고객님의 사용계약번호 $사용계약번호$ 기준 $년/월$ 요금은 $납부상태$으로/로 $납부방법$으로 납부해주시면 됩니다.
+      message = `${customerName} 고객님의 사용계약번호 ${useContractNum} 기준 ${Helper.convertDateToString(
+        requestYm,
+        'YYYYMMDD',
+        'YYYY년/MM월'
+      )} 요금은 ${
+        payMethod ? payMethod : '납부전'
+      }이며 ${paymentType}으로 납부해주시면 됩니다.`;
+    } else if (type === MessageTemplateType.TYPE_22) {
+      // 22.전체가상계좌
+      if (this.virtualAccountList.length) {
+        this.virtualAccountList.forEach((info, index) => {
+          if (index === this.virtualAccountList.length - 1) {
+            message = message + info.name + ' ' + info.account;
+          } else {
+            message = message + info.name + ' ' + info.account + '\n';
+          }
+        });
+      }
+    } else if (type === MessageTemplateType.TYPE_23) {
+      // 23.입금전용계좌 : $계약자 성명$ 고객님의 사용계약번호 $사용계약번호$ 기준 $은행명$ 입금전용계좌는 $계좌번호$ 입니다.
+      message = `${customerName} 고객님의 사용계약번호 ${useContractNum} 기준 ${
+        this.currentVirtualAccount.name
+      } 입금전용계좌는 ${this.currentVirtualAccount.account} 입니다.`;
+    }
+    this.appendMessage(message);
   }
 
   @action
@@ -1024,7 +1458,7 @@ class ChatStore {
     this.maxDateConvertString = '';
     this.averageSpeakTimeString = '';
     this.checkSelf = false;
-    this.earchType = '';
+    this.searchType = '';
     this.searchValue = '';
     this.startDate = moment().subtract(12, 'months');
     this.endDate = moment();
@@ -1047,9 +1481,13 @@ class ChatStore {
     this.contractList = [];
     this.cash = 0;
     this.currentContractInfo = null;
-    this.currentBiilInfo = null;
+    this.currentBillInfo = null;
     this.useContractNum = '';
     this.billHistoryMonthList = [];
+    this.currentHistoryMonth = '';
+    this.selectedContractInfo = null;
+    this.virtualAccount = [];
+    this.currentVirtualAccount = null;
   }
 }
 

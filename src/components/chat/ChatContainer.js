@@ -9,7 +9,7 @@ import MyTodayStats from './MyTodayStats';
 import Constant from '../../config/Constant';
 
 @withRouter
-@inject('chatStore', 'uiStore')
+@inject('chatStore', 'uiStore', 'appStore')
 @observer
 class ChatContainer extends React.Component {
   constructor(props) {
@@ -18,10 +18,13 @@ class ChatContainer extends React.Component {
   }
 
   componentDidMount() {
+    let { profile } = this.props.appStore;
+    let { companyId } = profile;
     this.props.uiStore.changeSideBarSelectMenuKName(
       Constant.SIDE_BAR_MENU_CHAT
     );
     this.props.chatStore.initSocket();
+    this.props.chatStore.applyContractPattern(companyId);
   }
 
   componentWillUnmount() {

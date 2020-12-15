@@ -419,7 +419,7 @@ class ChatStore {
 
   @action
   openBlackCustomerPopup(roomInfo) {
-    ModalService.openMiddlePopup(ModalType.BLACK_CUSTOMER_POPUP, {
+    ModalService.openAlertPopup(ModalType.BLACK_CUSTOMER_POPUP, {
       ok: (blockType, remark) => {
         let apiParam = { blockType: blockType, remark: remark };
         ApiService.put(
@@ -772,7 +772,7 @@ class ChatStore {
 
   @action
   transferRoom(roomInfo) {
-    ModalService.openMiddlePopup(ModalType.TALK_MOVE_POPUP, {
+    ModalService.openAlertPopup(ModalType.TALK_MOVE_POPUP, {
       customerName: roomInfo.customerName,
       ok: (transferValue, selectInfo) => {
         let apiParam = { transferType: 'ready' };
@@ -862,7 +862,7 @@ class ChatStore {
 
   @action
   openChatbotHistoryPopup(roomInfo) {
-    ModalService.openMiddlePopup(ModalType.CHAT_BOT_HISTORY_POPUP, {
+    ModalService.openAlertPopup(ModalType.CHAT_BOT_HISTORY_POPUP, {
       history: roomInfo.joinHistoryJson
     });
   }
@@ -870,7 +870,7 @@ class ChatStore {
   @action
   openMinwonAddPopup() {
     let currentRoomInfo = this.currentRoomInfo;
-    ModalService.openMiddlePopup(ModalType.MINWON_ADD_POPUP, {
+    ModalService.openPopup(ModalType.MINWON_ADD_POPUP, {
       customerName: currentRoomInfo.customerName,
       chatid: currentRoomInfo.chatid,
       gasappMemberNumber: currentRoomInfo.gasappMemberNumber,
@@ -905,7 +905,7 @@ class ChatStore {
   openMinwonHistoryPopup() {
     let currentRoomInfo = this.currentRoomInfo;
     if (currentRoomInfo.minwonHistoryCount) {
-      ModalService.openMiddlePopup(ModalType.MINWON_HISTORY_POPUP, {
+      ModalService.openPopup(ModalType.MINWON_HISTORY_POPUP, {
         customerName: currentRoomInfo.customerName,
         chatid: currentRoomInfo.chatid,
         gasappMemberNumber: currentRoomInfo.gasappMemberNumber,
@@ -920,7 +920,7 @@ class ChatStore {
   openJoinHistoryPopup() {
     let currentRoomInfo = this.currentRoomInfo;
     if (currentRoomInfo.joinHistoryCount) {
-      ModalService.openMiddlePopup(ModalType.JOIN_HISTORY_POPUP, {
+      ModalService.openPopup(ModalType.JOIN_HISTORY_POPUP, {
         customerName: currentRoomInfo.customerName,
         chatid: currentRoomInfo.chatid,
         gasappMemberNumber: currentRoomInfo.gasappMemberNumber,

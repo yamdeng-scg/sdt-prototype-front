@@ -81,4 +81,7 @@ Constant.LINK_PROTOCOL_TEL = 'tel';
 Constant.WARN_MESSAGE_TYPE_SWEAR = 1;
 Constant.WARN_MESSAGE_TYPE_INSULT = 2;
 
+Constant.MESSAGE_TEMPLATE_TYPE_REPLAY = 'reply';
+Constant.MESSAGE_TEMPLATE_TYPE_QUESTION = 'question';
+
 export default Constant;

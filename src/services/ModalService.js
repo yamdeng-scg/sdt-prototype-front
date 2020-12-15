@@ -13,22 +13,22 @@ class ModalService {
   }
 
   // AlertModalContainer에 정의한 모달 오픈
-  openMiddlePopup(modalType, modalData) {
+  openAlertPopup(modalType, modalData) {
     rootStore.alertModalStore.showModal(modalType, modalData);
   }
 
-  // ModalContainer에 정의한 모달 오픈
-  openFullPopup(modalType, modalData) {
-    rootStore.modalStore.showModal(modalType, modalData);
-  }
-
   // AlertModalContainer에 정의한 모달 닫기
-  closeMiddlePopup() {
+  closeAlertPopup() {
     rootStore.alertModalStore.hideModal();
   }
 
+  // ModalContainer에 정의한 모달 오픈
+  openPopup(modalType, modalData) {
+    rootStore.modalStore.showModal(modalType, modalData);
+  }
+
   // ModalContainer에 정의한 모달 닫기
-  closeFullPopup() {
+  closePopup() {
     rootStore.modalStore.hideModal();
   }
 }

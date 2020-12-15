@@ -14,40 +14,19 @@ import TalkMovePopup from '../popup/TalkMovePopup';
 import TemplateFormPopup from '../popup/TemplateFormPopup';
 import MinwonHistoryPopup from '../popup/MinwonHistoryPopup';
 
-@inject('alertModalStore')
+@inject('modalStore')
 @observer
 class ModalContainer extends React.Component {
   render() {
     let modalComponent = null;
-    let alertModalStore = this.props.alertModalStore;
-    let { modalType, modalData, displayModal } = alertModalStore;
+    let modalStore = this.props.modalStore;
+    let { modalType, modalData, displayModal } = modalStore;
     switch (modalType) {
-      case ModalType.ALERT_POPUP:
-        modalComponent = <AlertPopup modalData={modalData} />;
-        break;
-      case ModalType.CONFRIM_POPUP:
-        modalComponent = <ConfirmPopup modalData={modalData} />;
-        break;
-      case ModalType.BLACK_CUSTOMER_POPUP:
-        modalComponent = <BlackCustomerPopup modalData={modalData} />;
-        break;
-      case ModalType.CHAT_BOT_HISTORY_POPUP:
-        modalComponent = <ChatBotHistroyPopup modalData={modalData} />;
-        break;
       case ModalType.JOIN_HISTORY_POPUP:
         modalComponent = <JoinHistoryPopup modalData={modalData} />;
         break;
-      case ModalType.MANUAL_TAGLIST_POPUP:
-        modalComponent = <ManualTagListPopup modalData={modalData} />;
-        break;
-      case ModalType.MEMBER_STATE_CHANGE_POPUP:
-        modalComponent = <MemberStateChangePopup modalData={modalData} />;
-        break;
       case ModalType.MINWON_ADD_POPUP:
         modalComponent = <MinwonAddPopup modalData={modalData} />;
-        break;
-      case ModalType.TALK_MOVE_POPUP:
-        modalComponent = <TalkMovePopup modalData={modalData} />;
         break;
       case ModalType.TEMPLATE_FORM_POPUP:
         modalComponent = <TemplateFormPopup modalData={modalData} />;
@@ -63,7 +42,7 @@ class ModalContainer extends React.Component {
         maskClosable={false}
         visible={displayModal}
         footer={null}
-        onCancel={() => alertModalStore.hideModal()}
+        onCancel={() => modalStore.hideModal()}
         className={modalType}
       >
         {modalComponent}

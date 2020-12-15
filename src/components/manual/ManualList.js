@@ -98,7 +98,7 @@ class ManualList extends React.Component {
   }
 
   openManualTagListPopup = () => {
-    ModalService.openMiddlePopup(ModalType.MANUAL_TAGLIST_POPUP, {});
+    ModalService.openAlertPopup(ModalType.MANUAL_TAGLIST_POPUP, {});
   };
 
   render() {

@@ -11,6 +11,7 @@ import AppHistory from './utils/AppHistory';
 import ErrorService from './services/ErrorService';
 import Login from './components/Login';
 import ModalContainer from './components/layout/ModalContainer';
+import AlertModalContainer from './components/layout/AlertModalContainer';
 import { ConfigProvider, Spin } from 'antd';
 // import moment from 'moment';
 // import 'moment/locale/zh-cn';
@@ -117,6 +118,7 @@ class App extends Component {
             {token ? MainComponent : <Login />}
             {DEV_TOOL_COMPONENT}
             <ModalContainer />
+            <AlertModalContainer />
           </ConfigProvider>
         </Spin>
       </ErrorBoundary>

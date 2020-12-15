@@ -17,7 +17,7 @@ const createOption = label => ({
   value: label
 });
 
-@inject('alertModalStore')
+@inject('modalStore')
 @observer
 class TemplateFormPopup extends React.Component {
   constructor(props) {

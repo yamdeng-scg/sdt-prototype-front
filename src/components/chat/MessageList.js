@@ -5,6 +5,7 @@ import ModalType from '../../config/ModalType';
 import Constant from '../../config/Constant';
 import Helper from '../../utils/Helper';
 import ModalService from '../../services/ModalService';
+import _ from 'lodash';
 
 const replaceHighLighText = function(message, searchValue) {
   let resultMessage = message;
@@ -126,7 +127,12 @@ class MessageList extends React.Component {
                         ? 'none'
                         : 'inline-block'
                   }}
-                  onClick={this.openTemplateFormPopup}
+                  onClick={() =>
+                    this.openTemplateFormPopup(
+                      messageInfo,
+                      Constant.MESSAGE_TEMPLATE_TYPE_REPLAY
+                    )
+                  }
                 />
                 <span
                   onClick={() => deleteHandle(messageId)}
@@ -215,6 +221,12 @@ class MessageList extends React.Component {
                     height: 16,
                     display: 'inline-block'
                   }}
+                  onClick={() =>
+                    this.openTemplateFormPopup(
+                      messageInfo,
+                      Constant.MESSAGE_TEMPLATE_TYPE_REPLAY
+                    )
+                  }
                 />
                 <div style={{ color: '#a2a2a2' }}>
                   {/* {moment(messageInfo.createDate).format('LTS')} */}
@@ -230,8 +242,35 @@ class MessageList extends React.Component {
     return messsageListComponent;
   }
 
-  openTemplateFormPopup = () => {
-    ModalService.openMiddlePopup(ModalType.TEMPLATE_FORM_POPUP, {});
+  openTemplateFormPopup = (messageInfo, selectType) => {
+    let { messageList } = this.props;
+    let reply = '';
+    let question = '';
+    if (selectType === Constant.MESSAGE_TEMPLATE_TYPE_REPLAY) {
+      if (messageInfo.messageType === Constant.MESSAGE_TYPE_NORMAL) {
+        let searchIndex = _.findIndex(messageList, info => {
+          return info.id < messageInfo.id && messageInfo.isEmployee === 0;
+        });
+        if (searchIndex !== -1) {
+          question = messageList[searchIndex].message;
+        }
+        reply = messageInfo.message;
+      }
+    } else {
+      if (messageInfo.messageType === Constant.MESSAGE_TYPE_NORMAL) {
+        let searchIndex = _.findIndex(messageList, info => {
+          return info.id > messageInfo.id && messageInfo.isEmployee === 1;
+        });
+        if (searchIndex !== -1) {
+          reply = messageList[searchIndex].message;
+        }
+        question = messageInfo.message;
+      }
+    }
+    ModalService.openPopup(ModalType.TEMPLATE_FORM_POPUP, {
+      reply,
+      question
+    });
   };
 
   render() {

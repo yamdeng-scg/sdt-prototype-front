@@ -17,10 +17,6 @@ class MessageListTop extends React.Component {
     this.state = {};
   }
 
-  openJoinHistoryPopup() {
-    ModalService.openMiddlePopup(ModalType.JOIN_HISTORY_POPUP, {});
-  }
-
   render() {
     let { chatStore } = this.props;
     let { currentRoomInfo } = chatStore;

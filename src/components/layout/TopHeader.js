@@ -23,7 +23,7 @@ class TopHeader extends React.Component {
   }
 
   openMemberStateChangePopup() {
-    ModalService.openMiddlePopup(ModalType.MEMBER_STATE_CHANGE_POPUP, {});
+    ModalService.openAlertPopup(ModalType.MEMBER_STATE_CHANGE_POPUP, {});
   }
 
   logout = () => {

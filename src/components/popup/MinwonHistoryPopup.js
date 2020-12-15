@@ -6,7 +6,7 @@ import ApiService from '../../services/ApiService';
 import { SearchOutlined } from '@ant-design/icons';
 const { Panel } = Collapse;
 
-@inject('alertModalStore')
+@inject('modalStore')
 @observer
 class MinwonHistoryPopup extends React.Component {
   constructor(props) {

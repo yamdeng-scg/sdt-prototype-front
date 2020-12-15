@@ -20,7 +20,7 @@ class TemplateSearch extends React.Component {
   }
 
   openTemplateFormPopup = () => {
-    ModalService.openMiddlePopup(ModalType.TEMPLATE_FORM_POPUP, {});
+    ModalService.openPopup(ModalType.TEMPLATE_FORM_POPUP, {});
   };
 
   render() {

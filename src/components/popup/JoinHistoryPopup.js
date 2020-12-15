@@ -10,7 +10,7 @@ import LoadingBar from '../../utils/LoadingBar';
 import _ from 'lodash';
 const { Panel } = Collapse;
 
-@inject('alertModalStore')
+@inject('modalStore')
 @observer
 class JoinHistoryPopup extends React.Component {
   constructor(props) {
@@ -32,7 +32,6 @@ class JoinHistoryPopup extends React.Component {
     }).then(response => {
       let data = response.data;
       this.setState({ joinHistoryList: data });
-      LoadingBar.show();
     });
   }
 

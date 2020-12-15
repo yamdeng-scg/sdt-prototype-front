@@ -6,7 +6,7 @@ import ApiService from '../../services/ApiService';
 import Helper from '../../utils/Helper';
 import _ from 'lodash';
 const TextArea = Input.TextArea;
-@inject('alertModalStore')
+@inject('modalStore')
 @observer
 class MinwonAddPopup extends React.Component {
   categoryAllList = [];
@@ -70,14 +70,14 @@ class MinwonAddPopup extends React.Component {
   }
 
   ok() {
-    let { alertModalStore, modalData } = this.props;
+    let { modalStore, modalData } = this.props;
     let { smallCategoryInfo, memo } = this.state;
-    alertModalStore.hideModal();
+    modalStore.hideModal();
     modalData.ok(smallCategoryInfo, memo);
   }
 
   cancel() {
-    this.props.alertModalStore.hideModal();
+    this.props.modalStore.hideModal();
   }
 
   componentDidMount() {

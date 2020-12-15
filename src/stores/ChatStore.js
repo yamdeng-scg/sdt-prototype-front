@@ -726,11 +726,15 @@ class ChatStore {
     ).then(response => {
       runInAction(() => {
         let data = response.data;
-        this.currentBillInfo = data;
-        let virtualAccount = data.virtualAccount || {};
-        this.virtualAccountList = virtualAccount.accounts || [];
-        if (this.virtualAccountList.length) {
-          this.currentVirtualAccount = this.virtualAccountList[0];
+        if (response.status === 204) {
+          alert('청구정보가 존재하지 않습니다.');
+        } else {
+          this.currentBillInfo = data;
+          let virtualAccount = data.virtualAccount || {};
+          this.virtualAccountList = virtualAccount.accounts || [];
+          if (this.virtualAccountList.length) {
+            this.currentVirtualAccount = this.virtualAccountList[0];
+          }
         }
       });
     });
@@ -1219,7 +1223,9 @@ class ChatStore {
       customerName,
       centerPhone,
       address,
-      paymentType
+      paymentType,
+      meterReplaceDate,
+      safeCheck
     } = this.currentContractInfo;
     let addressStr = '';
     if (address && address.address1) {
@@ -1271,10 +1277,21 @@ class ChatStore {
       message = `${customerName} 고객님의 사용계약번호 ${useContractNum} 기준 주소지는 ${addressStr} 입니다.`;
     } else if (type === MessageTemplateType.TYPE_2) {
       // 2.최근계량기교체일 : $계약자 성명$ 고객님의 사용계약번호 $사용계약번호$ 기준 최근 계량기 교체일은 $최근계량기교체일 년/월/일$ 입니다.
-      message = `${customerName} 고객님의 사용계약번호 ${useContractNum} 기준 최근 계량기 교체일은 $최근계량기교체일 년/월/일$ 입니다.`;
+      message = `${customerName} 고객님의 사용계약번호 ${useContractNum} 기준 최근 계량기 교체일은 ${Helper.convertDateToString(
+        meterReplaceDate,
+        'YYYY-MM-DD',
+        'YYYY년MM월DD일'
+      )} 입니다.`;
     } else if (type === MessageTemplateType.TYPE_3) {
       // 3.최근안전점검일자(추가) : $계약자 성명$ 고객님의 사용계약번호 $사용계약번호$ 기준 최근 안전점검일자는 $최근 안전점검일자 년/월/일(적합or불합)$ 입니다.
-      message = `${customerName} 고객님의 사용계약번호 ${useContractNum} 기준 최근 안전점검일자는 $최근 안전점검일자 년/월/일(적합or불합)$ 입니다.`;
+      message = `${customerName} 고객님의 사용계약번호 ${useContractNum} 기준 최근 안전점검일자는 ${Helper.convertDateToString(
+        safeCheck.sendDate,
+        'YYYY-MM-DD',
+        'YYYY년MM월DD일'
+      ) +
+        '(' +
+        safeCheck.checkResult +
+        ')'} 입니다.`;
     } else if (type === MessageTemplateType.TYPE_4) {
       // 4.잔여캐시(추가) : $계약자 성명$ 고객님의 사용계약번호 $사용계약번호$ 기준 잔여캐시는 $잔여캐시$ 입니다.
       message = `${customerName} 고객님의 사용계약번호 ${useContractNum} 기준 잔여캐시는 ${cash.toLocaleString()} 입니다.`;

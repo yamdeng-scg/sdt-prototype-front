@@ -46,8 +46,11 @@ class ContractDeftail extends React.Component {
         gmtrBaseDay,
         billSendMethod,
         paymentType,
-        centerName
+        centerName,
+        meterReplaceDate,
+        safeCheck
       } = currentContractInfo;
+      safeCheck = safeCheck || {};
       let addressStr = '';
       if (address && address.address1) {
         addressStr = address.address1 + ' ' + address.address2;
@@ -460,7 +463,11 @@ class ContractDeftail extends React.Component {
                   chatStore.sendMessageTemplate(MessageTemplateType.TYPE_2)
                 }
               >
-                2020년 1월 21일
+                {Helper.convertDateToString(
+                  meterReplaceDate,
+                  'YYYY-MM-DD',
+                  'YYYY년MM월DD일'
+                )}
               </span>
             </Col>
             <Col span={12} className="left bold color-basic">
@@ -473,7 +480,14 @@ class ContractDeftail extends React.Component {
                   chatStore.sendMessageTemplate(MessageTemplateType.TYPE_3)
                 }
               >
-                2020년 1월 21일
+                {Helper.convertDateToString(
+                  safeCheck.sendDate,
+                  'YYYY-MM-DD',
+                  'YYYY년MM월DD일'
+                ) +
+                  ' (' +
+                  safeCheck.checkResult +
+                  ')'}
               </span>
             </Col>
             <Col span={12} className="left bold color-basic">
@@ -517,7 +531,7 @@ class ContractDeftail extends React.Component {
           <Col span={24}>
             <Title level={3} className="text mr0">
               사용계약정보{' '}
-              {contractList.length ? '(' + contractList.length + ')' : ''}
+              {contractList.length ? '(' + (contractList.length - 1) + ')' : ''}
             </Title>
           </Col>
         </Row>

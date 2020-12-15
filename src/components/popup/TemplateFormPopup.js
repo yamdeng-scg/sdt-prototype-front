@@ -8,134 +8,89 @@ import {
   SearchOutlined
 } from '@ant-design/icons';
 import CreatableSelect from 'react-select/creatable';
+import ApiService from '../../services/ApiService';
+import Helper from '../../utils/Helper';
+import Constant from '../../config/Constant';
+import _ from 'lodash';
 const components = {
   DropdownIndicator: null
 };
 
-const createOption = label => ({
-  label,
-  value: label
-});
-
 @inject('modalStore')
 @observer
 class TemplateFormPopup extends React.Component {
+  categoryAllList = [];
   constructor(props) {
     super(props);
-
-    const x = 10;
-    const y = 2;
-    const z = 1;
-    const gData = [];
-
-    const generateData = (_level, _preKey, _tns) => {
-      const preKey = _preKey || '0';
-      const tns = _tns || gData;
-
-      const children = [];
-      for (let i = 0; i < x; i++) {
-        const key = `${preKey}-${i}`;
-        tns.push({ title: key, key });
-        if (i < y) {
-          children.push(key);
-        }
-      }
-      if (_level < 0) {
-        return tns;
-      }
-      const level = _level - 1;
-      children.forEach((key, index) => {
-        tns[index].children = [];
-        return generateData(level, key, tns[index].children);
-      });
-    };
-    generateData(z);
-
+    let { modalData } = this.props;
+    let { reply, ask, formType, templateId } = modalData;
     this.state = {
+      expandedKeys: [],
+      treeData: [],
+      searchValue: '',
+      smallCategoryInfo: null,
       inputValue: '',
-      value: [],
-      gData: gData,
-      expandedKeys: ['0-0', '0-0-0', '0-0-0-0']
+      keywordList: [],
+      reply: reply || '',
+      ask: ask || '',
+      isFavorite: false,
+      formType: formType,
+      templateId: templateId || null
     };
+    this.treeRef = React.createRef();
+    this.cancel = this.cancel.bind(this);
+    this.changeReply = this.changeReply.bind(this);
+    this.changeAsk = this.changeAsk.bind(this);
+    this.toggleIsFavorite = this.toggleIsFavorite.bind(this);
+    this.save = this.save.bind(this);
   }
 
-  onDragEnter = info => {
-    console.log(info);
-    // expandedKeys 需要受控时设置
-    // this.setState({
-    //   expandedKeys: info.expandedKeys,
-    // });
-  };
-
-  onDrop = info => {
-    console.log(info);
-    const dropKey = info.node.props.eventKey;
-    const dragKey = info.dragNode.props.eventKey;
-    const dropPos = info.node.props.pos.split('-');
-    const dropPosition =
-      info.dropPosition - Number(dropPos[dropPos.length - 1]);
-
-    const loop = (data, key, callback) => {
-      for (let i = 0; i < data.length; i++) {
-        if (data[i].key === key) {
-          return callback(data[i], i, data);
-        }
-        if (data[i].children) {
-          loop(data[i].children, key, callback);
-        }
-      }
-    };
-    const data = [...this.state.gData];
-
-    // Find dragObject
-    let dragObj;
-    loop(data, dragKey, (item, index, arr) => {
-      arr.splice(index, 1);
-      dragObj = item;
-    });
-
-    if (!info.dropToGap) {
-      // Drop on the content
-      loop(data, dropKey, item => {
-        item.children = item.children || [];
-        // where to insert 示例添加到尾部，可以是随意位置
-        item.children.push(dragObj);
+  onChange = e => {
+    const { value } = e.target;
+    let expandedKeys = [];
+    if (value) {
+      let findList = _.filter(this.categoryAllList, info => {
+        return info.title.indexOf(value) !== -1;
       });
-    } else if (
-      (info.node.props.children || []).length > 0 && // Has children
-      info.node.props.expanded && // Is expanded
-      dropPosition === 1 // On the bottom gap
-    ) {
-      loop(data, dropKey, item => {
-        item.children = item.children || [];
-        // where to insert 示例添加到头部，可以是随意位置
-        item.children.unshift(dragObj);
+      findList.forEach(info => {
+        Helper.addExpandedKeys(this.categoryAllList, expandedKeys, info);
       });
-    } else {
-      let ar;
-      let i;
-      loop(data, dropKey, (item, index, arr) => {
-        ar = arr;
-        i = index;
-      });
-      if (dropPosition === -1) {
-        ar.splice(i, 0, dragObj);
-      } else {
-        ar.splice(i + 1, 0, dragObj);
+      if (findList.length) {
+        let findKeys = findList.map(info => info.key);
+        setTimeout(() => {
+          this.treeRef.current.scrollTo({
+            key: _.sortedUniq(findKeys)[0]
+          });
+        }, 500);
       }
     }
-
     this.setState({
-      gData: data
+      expandedKeys: _.uniq(expandedKeys),
+      searchValue: value,
+      autoExpandParent: true
     });
   };
 
-  handleChange = (value, actionMeta) => {
-    console.group('Value Changed');
-    console.log(value);
-    console.log(`action: ${actionMeta.action}`);
-    console.groupEnd();
-    this.setState({ value });
+  onSelect = (selectedKeys, tree) => {
+    let info = tree.node.info;
+    if (info.level === 3) {
+      this.setState({ smallCategoryInfo: info });
+    }
+  };
+
+  onExpand = expandedKeys => {
+    this.setState({
+      expandedKeys,
+      autoExpandParent: false
+    });
+  };
+
+  cancel() {
+    this.props.modalStore.hideModal();
+  }
+
+  handleChange = (keywordList, actionMeta) => {
+    this.setState({ keywordList });
   };
 
   handleInputChange = inputValue => {
@@ -143,24 +98,163 @@ class TemplateFormPopup extends React.Component {
   };
 
   handleKeyDown = event => {
-    const { inputValue, value } = this.state;
+    let { inputValue, keywordList } = this.state;
     if (!inputValue) return;
     switch (event.key) {
       case 'Enter':
       case 'Tab':
-        console.group('Value Added');
-        console.log(value);
-        console.groupEnd();
-        this.setState({
-          inputValue: '',
-          value: [...value, createOption(inputValue)]
+        ApiService.post('keyword', {
+          name: inputValue
+        }).then(response => {
+          let data = response.data;
+          let searchIndex = _.findIndex(keywordList, info => {
+            return info.name === data.name;
+          });
+          if (searchIndex === -1) {
+            keywordList = keywordList.concat([data]);
+          }
+          this.setState({ keywordList, inputValue: '' });
         });
         event.preventDefault();
+        break;
+      default:
+        break;
     }
   };
 
+  changeReply(event) {
+    this.setState({ reply: event.target.value });
+  }
+
+  changeAsk(event) {
+    this.setState({ ask: event.target.value });
+  }
+
+  toggleIsFavorite() {
+    this.setState({ isFavorite: !this.state.isFavorite });
+  }
+
+  save() {
+    let { modalData } = this.props;
+    let { okHandle } = modalData;
+    let {
+      smallCategoryInfo,
+      keywordList,
+      ask,
+      reply,
+      isFavorite,
+      formType,
+      templateId
+    } = this.state;
+    let keywordIds = keywordList.map(info => info.id);
+    let apiParam = {
+      categorySmallId: smallCategoryInfo.id,
+      ask: ask,
+      reply: reply,
+      isFavorite: isFavorite,
+      keywordIds: keywordIds
+    };
+    if (formType === Constant.FORM_TYPE_NEW) {
+      ApiService.post('template', apiParam).then(response => {
+        alert('등록 되었습니다.');
+        okHandle();
+      });
+    } else {
+      ApiService.post('template/' + templateId, apiParam).then(response => {
+        alert('저장 되었습니다.');
+        okHandle();
+      });
+    }
+  }
+
+  componentDidMount() {
+    let { formType, templateId } = this.state;
+    ApiService.get('category/tree').then(response => {
+      let data = response.data;
+      this.categoryAllList = [];
+      data.forEach(treeInfo => {
+        Helper.addCategoryList(this.categoryAllList, treeInfo);
+      });
+      let treeData = data;
+      let expandedKeys = [];
+      this.setState({ treeData: treeData, expandedKeys: expandedKeys });
+    });
+    if (formType === Constant.FORM_TYPE_EDIT) {
+      ApiService.get('template/' + templateId).then(response => {
+        let data = response.data;
+        let {
+          ask,
+          reply,
+          isFavorite,
+          categoryLargeName,
+          categoryMiddleName,
+          categorySmallId,
+          categorySmallName,
+          keywordList
+        } = data;
+        let smallCategoryInfo = {
+          categoryLargeName,
+          categoryMiddleName,
+          categorySmallName,
+          name: categorySmallName,
+          categorySmallId,
+          id: categorySmallId
+        };
+        this.setState({
+          ask: ask,
+          reply: reply,
+          isFavorite: isFavorite,
+          smallCategoryInfo,
+          keywordList
+        });
+      });
+    }
+  }
+
   render() {
-    const { inputValue, value } = this.state;
+    let {
+      treeData,
+      searchValue,
+      expandedKeys,
+      smallCategoryInfo,
+      inputValue,
+      keywordList,
+      ask,
+      reply,
+      isFavorite
+    } = this.state;
+    const loop = data =>
+      data.map(item => {
+        const index = item.title.indexOf(searchValue);
+        const beforeStr = item.title.substr(0, index);
+        const afterStr = item.title.substr(index + searchValue.length);
+        const title =
+          index > -1 ? (
+            <span>
+              {beforeStr}
+              <span className="bold bg-yellow">{searchValue}</span>
+              {afterStr}
+            </span>
+          ) : (
+            <span>{item.title}</span>
+          );
+        if (item.children) {
+          return {
+            title,
+            key: item.key,
+            level: item.level,
+            info: item,
+            children: loop(item.children)
+          };
+        }
+
+        return {
+          title,
+          key: item.key,
+          level: item.level,
+          info: item
+        };
+      });
     return (
       <div className="pd-top15">
         <Row className="center pd-bottom15 bor-bottom text font-em2 bold">
@@ -181,7 +275,7 @@ class TemplateFormPopup extends React.Component {
             </Col>
             <Col span={16} className="pd-left10">
               <Input
-                placeholder="input search text"
+                placeholder="카테고리 트리를 검색해주세요"
                 enterButton={null}
                 allowClear
                 size="large"
@@ -193,6 +287,7 @@ class TemplateFormPopup extends React.Component {
                     }}
                   />
                 }
+                onChange={this.onChange}
               />
             </Col>
           </Row>
@@ -204,14 +299,14 @@ class TemplateFormPopup extends React.Component {
           <Row className="mrb5">
             <Col span={8}>
               <Tree
+                ref={this.treeRef}
                 style={{ overflowY: 'auto', height: 350 }}
+                height={350}
                 className="draggable-tree"
-                defaultExpandedKeys={this.state.expandedKeys}
-                draggable
-                blockNode
-                onDragEnter={this.onDragEnter}
-                onDrop={this.onDrop}
-                treeData={this.state.gData}
+                treeData={loop(treeData)}
+                expandedKeys={expandedKeys}
+                onSelect={this.onSelect}
+                onExpand={this.onExpand}
                 switcherIcon={
                   <CaretDownOutlined
                     style={{ fontSize: '16px', color: 'gray' }}
@@ -226,10 +321,19 @@ class TemplateFormPopup extends React.Component {
                 </Col>
                 <Col span={24} className="mrb10">
                   <Input
-                    placeholder="input search text"
+                    placeholder="분류선택시 자동 표기됩니다.(ex. 요금 > 요금확인 > FAX발송요청)"
                     allowClear
                     size="large"
                     disabled
+                    value={
+                      smallCategoryInfo
+                        ? smallCategoryInfo.categoryLargeName +
+                          ' > ' +
+                          smallCategoryInfo.categoryMiddleName +
+                          ' > ' +
+                          smallCategoryInfo.name
+                        : ''
+                    }
                   />
                 </Col>
               </Row>
@@ -239,9 +343,11 @@ class TemplateFormPopup extends React.Component {
                 </Col>
                 <Col span={24} className="mrb10">
                   <Input
-                    placeholder="input search text"
+                    placeholder="질문을 입력해주세요"
                     allowClear
                     size="large"
+                    value={ask}
+                    onChange={this.changeAsk}
                   />
                 </Col>
               </Row>
@@ -251,9 +357,11 @@ class TemplateFormPopup extends React.Component {
                 </Col>
                 <Col span={24} className="mrb10">
                   <Input
-                    placeholder="input search text"
+                    placeholder="답변을 입력해주세요"
                     allowClear
                     size="large"
+                    value={reply}
+                    onChange={this.changeReply}
                   />
                 </Col>
               </Row>
@@ -270,9 +378,11 @@ class TemplateFormPopup extends React.Component {
                     menuIsOpen={false}
                     onChange={this.handleChange}
                     onInputChange={this.handleInputChange}
+                    getOptionLabel={option => option.name}
+                    getOptionValue={option => option.id}
                     onKeyDown={this.handleKeyDown}
-                    placeholder="Type something and press enter..."
-                    value={value}
+                    placeholder="키워드를 입력해주세요"
+                    value={keywordList}
                   />
                 </Col>
               </Row>
@@ -281,7 +391,17 @@ class TemplateFormPopup extends React.Component {
                   <span className="bold font-em1 inblock mrr5">
                     즐겨쓰는 템플릿 등록
                   </span>
-                  <StarOutlined className="color-basic font-em2" />
+                  {isFavorite ? (
+                    <StarFilled
+                      onClick={this.toggleIsFavorite}
+                      className="color-basic font-em2"
+                    />
+                  ) : (
+                    <StarOutlined
+                      onClick={this.toggleIsFavorite}
+                      className="color-basic font-em2"
+                    />
+                  )}
                 </Col>
               </Row>
             </Col>
@@ -289,12 +409,12 @@ class TemplateFormPopup extends React.Component {
         </div>
         <Row style={{ textAlign: 'center' }}>
           <Col span={12}>
-            <Button block className="pd10 bold cancelbtn">
+            <Button block className="pd10 bold cancelbtn" onClick={this.cancel}>
               취소
             </Button>
           </Col>
           <Col span={12}>
-            <Button block className="pd10 bold okbtn">
+            <Button block className="pd10 bold okbtn" onClick={this.save}>
               확인
             </Button>
           </Col>

@@ -224,7 +224,7 @@ class MessageList extends React.Component {
                   onClick={() =>
                     this.openTemplateFormPopup(
                       messageInfo,
-                      Constant.MESSAGE_TEMPLATE_TYPE_REPLAY
+                      Constant.MESSAGE_TEMPLATE_TYPE_ASK
                     )
                   }
                 />
@@ -245,31 +245,35 @@ class MessageList extends React.Component {
   openTemplateFormPopup = (messageInfo, selectType) => {
     let { messageList } = this.props;
     let reply = '';
-    let question = '';
+    let ask = '';
     if (selectType === Constant.MESSAGE_TEMPLATE_TYPE_REPLAY) {
       if (messageInfo.messageType === Constant.MESSAGE_TYPE_NORMAL) {
         let searchIndex = _.findIndex(messageList, info => {
-          return info.id < messageInfo.id && messageInfo.isEmployee === 0;
+          return info.id < messageInfo.id && info.isEmployee === 0;
         });
         if (searchIndex !== -1) {
-          question = messageList[searchIndex].message;
+          ask = messageList[searchIndex].message;
         }
         reply = messageInfo.message;
       }
     } else {
       if (messageInfo.messageType === Constant.MESSAGE_TYPE_NORMAL) {
         let searchIndex = _.findIndex(messageList, info => {
-          return info.id > messageInfo.id && messageInfo.isEmployee === 1;
+          return info.id > messageInfo.id && info.isEmployee === 1;
         });
         if (searchIndex !== -1) {
           reply = messageList[searchIndex].message;
         }
-        question = messageInfo.message;
+        ask = messageInfo.message;
       }
     }
     ModalService.openPopup(ModalType.TEMPLATE_FORM_POPUP, {
       reply,
-      question
+      ask,
+      formType: Constant.FORM_TYPE_NEW,
+      okHandle: () => {
+        ModalService.closePopup();
+      }
     });
   };
 

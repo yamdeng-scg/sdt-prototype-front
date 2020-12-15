@@ -10,10 +10,10 @@ Constant.ERROR_TYPE_REACT = 'react';
 Constant.ERROR_TYPE_APP = 'app';
 
 // form new id
-Constant.FORM_NEW_ID = 'add';
+Constant.FORM_NEW_ID = 'new';
 
 // 폼 종류
-Constant.FORM_TYPE_NEW = 'add';
+Constant.FORM_TYPE_NEW = 'create';
 Constant.FORM_TYPE_EDIT = 'edit';
 
 // 모달 라벨
@@ -82,6 +82,6 @@ Constant.WARN_MESSAGE_TYPE_SWEAR = 1;
 Constant.WARN_MESSAGE_TYPE_INSULT = 2;
 
 Constant.MESSAGE_TEMPLATE_TYPE_REPLAY = 'reply';
-Constant.MESSAGE_TEMPLATE_TYPE_QUESTION = 'question';
+Constant.MESSAGE_TEMPLATE_TYPE_ASK = 'ask';
 
 export default Constant;

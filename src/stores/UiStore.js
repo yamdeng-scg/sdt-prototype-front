@@ -73,6 +73,12 @@ class UiStore {
   // 오늘의 상담 정보 요청
   @action
   loadTodayStats() {}
+
+  @action
+  clearModal() {
+    this.rootStore.modalStore.hideAllModal();
+    this.rootStore.alertModalStore.hideModal();
+  }
 }
 
 export default UiStore;

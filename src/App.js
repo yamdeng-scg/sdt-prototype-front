@@ -77,6 +77,7 @@ class App extends Component {
     this.historyBlockHandler = AppHistory.block((location, action) => {
       let currentRouteUrl = location.pathname;
       Logger.info('history change ' + action + ' : ' + currentRouteUrl);
+      uiStore.clearModal();
       // 현재 라우팅 url 변경
       if (action === 'REPLACE') {
         uiStore.changeOnlyCurrentRouteUrl(currentRouteUrl);

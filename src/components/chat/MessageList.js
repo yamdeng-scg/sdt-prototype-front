@@ -270,7 +270,6 @@ class MessageList extends React.Component {
     ModalService.openPopup(ModalType.TEMPLATE_FORM_POPUP, {
       reply,
       ask,
-      formType: Constant.FORM_TYPE_NEW,
       okHandle: () => {
         ModalService.closePopup();
       }

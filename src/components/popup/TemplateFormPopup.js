@@ -23,7 +23,7 @@ class TemplateFormPopup extends React.Component {
   constructor(props) {
     super(props);
     let { modalData } = this.props;
-    let { reply, ask, formType, templateId } = modalData;
+    let { reply, ask, templateId } = modalData;
     this.state = {
       expandedKeys: [],
       treeData: [],
@@ -34,7 +34,7 @@ class TemplateFormPopup extends React.Component {
       reply: reply || '',
       ask: ask || '',
       isFavorite: false,
-      formType: formType,
+      formType: templateId ? Constant.FORM_TYPE_EDIT : Constant.FORM_TYPE_NEW,
       templateId: templateId || null
     };
     this.treeRef = React.createRef();
@@ -90,6 +90,7 @@ class TemplateFormPopup extends React.Component {
   }
 
   handleChange = (keywordList, actionMeta) => {
+    keywordList = keywordList || [];
     this.setState({ keywordList });
   };
 
@@ -160,7 +161,7 @@ class TemplateFormPopup extends React.Component {
         okHandle();
       });
     } else {
-      ApiService.post('template/' + templateId, apiParam).then(response => {
+      ApiService.put('template/' + templateId, apiParam).then(response => {
         alert('저장 되었습니다.');
         okHandle();
       });

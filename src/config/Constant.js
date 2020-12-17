@@ -84,4 +84,7 @@ Constant.WARN_MESSAGE_TYPE_INSULT = 2;
 Constant.MESSAGE_TEMPLATE_TYPE_REPLAY = 'reply';
 Constant.MESSAGE_TEMPLATE_TYPE_ASK = 'ask';
 
+Constant.TEMPLATE_SEARCH_TAB_ALL = 'all';
+Constant.TEMPLATE_SEARCH_TAB_FAVORITE = 'favortie';
+
 export default Constant;

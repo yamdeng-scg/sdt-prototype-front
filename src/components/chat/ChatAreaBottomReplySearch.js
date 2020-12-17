@@ -54,8 +54,7 @@ class ChatAreaBottomReplySearch extends React.Component {
 
   onExpand = expandedKeys => {
     this.setState({
-      expandedKeys,
-      autoExpandParent: false
+      expandedKeys
     });
   };
 

@@ -48,6 +48,14 @@ Code.blockTypeCodeList = [
   { name: '신고협박', value: '신고협박' }
 ];
 
+Code.templateSearchCodeList = [
+  { name: '전체', value: '' },
+  { name: '등록자', value: 'memberName' },
+  { name: '질문', value: 'ask' },
+  { name: '답변', value: 'reply' },
+  { name: '키워드', value: 'keyword' }
+];
+
 Code.getCodeNameByValue = function(codeCategory, codeValue) {
   let codeName = null;
   let codeList = Code[codeCategory] || [];

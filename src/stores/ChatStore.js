@@ -9,7 +9,7 @@ import _ from 'lodash';
 
 // http://localhost:8090
 // https://cstalk-prototype.herokuapp.com
-const serverUrl = 'http://localhost:8090';
+const serverUrl = 'https://cstalk-prototype.herokuapp.com';
 
 class ChatStore {
   @observable

@@ -1,5 +1,6 @@
 import { observable, action, runInAction, computed } from 'mobx';
 import Helper from '../utils/Helper';
+import Api from '../utils/Api';
 import ApiService from '../services/ApiService';
 import ModalService from '../services/ModalService';
 import Constant from '../config/Constant';
@@ -59,7 +60,7 @@ class AppStore {
 
   @action
   loadProfile() {
-    ApiService.get('auth/profile').then(response => {
+    Api.get('auth/profile').then(response => {
       let data = response.data;
       this.setLoginInfo(data);
     });

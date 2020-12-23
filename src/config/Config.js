@@ -21,7 +21,7 @@ Config.version = '3.2.0';
 Config.qaVersion = '33';
 
 // Helper.scrollTopByDivId 애니메이션 기준 timeout
-Config.scrollTopAnimationTimeout = 500;
+Config.scrollAnimationTimeout = 500;
 
 // 기본 결제 유형
 Config.defaultPayType = Constant.PAY_TYPE_CARD;

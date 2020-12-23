@@ -4,7 +4,7 @@ import Logger from './Logger';
 import LoadingBar from '../utils/LoadingBar';
 import rootStore from '../stores/RootStore';
 
-let API_URL = '/api/';
+let API_URL = 'https://cstalk-prototype.herokuapp.com/';
 
 const Api = axios.create({
   baseURL: API_URL,

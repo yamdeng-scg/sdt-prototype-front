@@ -1,6 +1,6 @@
 import { observable, action, computed, runInAction } from 'mobx';
 import Helper from '../utils/Helper';
-import ApiService from '../services/ApiService';
+import Api from '../utils/Api';
 
 // {
 //   "loginName": "yamdeng1",
@@ -59,7 +59,7 @@ class LoginStore {
     apiParam.password = this.password;
     apiParam.companyId = this.companyId;
     if (this.validForm()) {
-      ApiService.post('auth/login', apiParam).then(response => {
+      Api.post('auth/login', apiParam).then(response => {
         runInAction(() => {
           let data = response.data;
           let appStore = this.rootStore.appStore;

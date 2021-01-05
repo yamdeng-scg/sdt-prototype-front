@@ -167,5 +167,5 @@
     "shortid": "^2.2.14"
   },
   "homepage": "/",
-  "proxy": "http://localhost:8090"
+  "proxy": "http://localhost:8080"
 }

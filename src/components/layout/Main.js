@@ -12,26 +12,43 @@ const companyCodeList = [
   { name: '인천도시가스', value: '2' }
 ];
 
+// 3771	김영경	gXPkAJqClSMOpdFhPwtAzTkcVhsn2CeK
+// 3779	홍진희	xB7IDWWwwlmPrPTCxlIEcoiZqSVVfj2E
+// 3741	신재원	wRe6df4VdjmtS438k2b16C1x0bUYhPz8
+// 3369	이유진	073jdhlj9dEHBCwv5Fv9rRY84cGTWmCk
+// 3711	안용성	6UFYEVSOZNZlDVRr5UWwnX2fxa70aJm8
+// 3721	배재현	9Fw2cXKy8WpcTyVhD8mO4Ek0VmJSqHJc
+// 3724	김태수	00uF2ZJKU3ltQjjDus3JjqUVkzIAZtKf
+// 3769	황승연	1UBf0YqoCCzMd4AIKUYacZ89dfS8jkrH
+// 3780	우하나	0ijhmGpmlfCTpMUtJf87SODlILpg72qO
+// 3826	백하영	3hCcg1tub7mvwR3lUbbMbGlCMdklgGz1
+
 const customerList = [
   {
     companyId: '1',
-    appId: '7001',
-    name: '안용성1',
-    telNumber: '010111117001'
+    appId: '3779',
+    name: '김영경'
   },
   {
     companyId: '1',
-    appId: '7002',
-    name: '안용성2',
-    telNumber: '010111117002'
+    appId: '3779',
+    name: '홍진희'
   },
   {
     companyId: '1',
-    appId: '7003',
-    name: '안용성3',
-    telNumber: '010111117003'
+    appId: '3741',
+    name: '신재원'
   },
-  { companyId: '2', appId: '7001', name: '안용성1', telNumber: '010111117001' }
+  {
+    companyId: '1',
+    appId: '3369',
+    name: '이유진'
+  },
+  {
+    companyId: '1',
+    appId: '3711',
+    name: '안용성'
+  }
 ];
 
 @withRouter
@@ -56,11 +73,10 @@ class Main extends React.Component {
 
   applyCustomerInfo(customerInfo) {
     let { chatStore } = this.props;
-    let { companyId, appId, name, telNumber } = customerInfo;
+    let { companyId, appId, name } = customerInfo;
     chatStore.changeCompanyId(companyId);
     chatStore.changeAppId(appId);
     chatStore.changeName(name);
-    chatStore.changeTelNumber(telNumber);
     this.setState({ viewModal: false });
   }
 
@@ -118,12 +134,6 @@ class Main extends React.Component {
                       <Col span={24}>
                         <span style={{ fontWeight: 'bold' }}>이름</span> :{' '}
                         {customerInfo.name}
-                      </Col>
-                    </Row>
-                    <Row align="middle" gutter={6} style={{ marginTop: 10 }}>
-                      <Col span={24}>
-                        <span style={{ fontWeight: 'bold' }}>전화번호</span> :{' '}
-                        {customerInfo.telNumber}
                       </Col>
                     </Row>
                     <Row align="middle" gutter={6} style={{ marginTop: 10 }}>
@@ -257,7 +267,7 @@ class Main extends React.Component {
                   <Button
                     block
                     className="bold mrt5"
-                    onClick={() => chatStore.review(1)}
+                    onClick={() => chatStore.review(3)}
                   >
                     리뷰
                   </Button>

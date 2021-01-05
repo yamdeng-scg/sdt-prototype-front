@@ -1,3 +1,5 @@
+/* global SockJS, Stomp */
+
 import { observable, action, runInAction, computed } from 'mobx';
 import { message } from 'antd';
 import io from 'socket.io-client';
@@ -8,8 +10,15 @@ import SocketService from '../services/SocketService';
 import _ from 'lodash';
 
 // http://localhost:8090
-// https://cstalk-prototype.herokuapp.com
-const serverUrl = 'https://cstalk-prototype.herokuapp.com';
+// https://cstalk-prototype.herokuapp.com/w
+// http://localhost:8090/ws
+const serverUrl = 'http://localhost:8080/ws';
+
+// 챗봇 메시지 컨테이너 id
+const chatbotContainerId = 'messageContainer';
+
+// 스크롤 애니메이션 timeout
+const scrollAnimationTime = 500;
 
 class ChatStore {
   @observable
@@ -56,11 +65,6 @@ class ChatStore {
   }
 
   @action
-  changeTelNumber(telNumber) {
-    this.telNumber = telNumber;
-  }
-
-  @action
   changeMessage(message) {
     this.message = message;
   }
@@ -90,61 +94,96 @@ class ChatStore {
   }
 
   @action
-  sendImage() {}
-
-  @action
-  sendEmotikon() {}
-
-  @action
   connectSocket() {
-    let socketUrl = serverUrl;
-    let socket = this.socket;
     let companyId = this.companyId;
     let appId = this.appId;
-    let name = this.name;
-    let telNumber = this.telNumber;
     this.afterJoinListCall = false;
-    if (!socket || socket.disconnected) {
-      socketUrl =
-        socketUrl +
-        '?companyId=' +
-        companyId +
-        '&appId=' +
-        appId +
-        '&name=' +
-        name +
-        '&telNumber=' +
-        telNumber;
-      this.socket = io(socketUrl);
-      this.initDefaultSocektEvent();
+    return new Promise((resolve, reject) => {
+      if (!this.socket) {
+        let secretKey = '$CSTALK#_' + moment().format('YYYYMMDD');
+        let socketUrl = serverUrl;
+        let sockJsInstance = new SockJS(socketUrl);
+        let socket = Stomp.over(sockJsInstance);
+        socket.connect(
+          {
+            companyId: companyId,
+            gasappMemberNumber: appId,
+            secretKey: secretKey
+          },
+          socketResponse => {
+            this.onConnect(socketResponse);
+            this.initSocketEventTypeStomp();
+            resolve();
+          },
+          () => {
+            // console.log('error');
+          }
+        );
+        this.socket = socket;
+      } else {
+        resolve();
+      }
+    });
+  }
+
+  // 소켓 이벤트 등록 : stomp
+  @action
+  initSocketEventTypeStomp() {
+    if (this.socket) {
+      // 개인메시지 수신전용 구독(Session 기반)
+      this.socket.subscribePrivate = this.socket.subscribe(
+        '/user/session/message',
+        subscribeInfo => {
+          this.onPrivateSubscribe(subscribeInfo);
+        },
+        {} // 구독시 전송할 헤더
+      );
     }
   }
 
-  initDefaultSocektEvent() {
-    this.socket.on('connect', socketResponse => {
-      this.onConnect(socketResponse);
-    });
-    this.socket.on('disconnect', socketResponse => {
-      this.onDisconnect(socketResponse);
-    });
-    this.socket.on('welcome', socketResponse => {
-      this.onWelcome(socketResponse);
-    });
-    this.socket.on('message-list', socketResponse => {
-      this.onMessageList(socketResponse);
-    });
-    this.socket.on('message', socketResponse => {
-      this.onMessage(socketResponse);
-    });
-    this.socket.on('error', socketResponse => {
-      this.onError(socketResponse);
-    });
-    this.socket.on('read-message', socketResponse => {
-      this.onReadMessage(socketResponse);
-    });
-    this.socket.on('room-detail', socketResponse => {
-      this.onRoomDetail(socketResponse);
-    });
+  @action
+  setCustomer(customer) {
+    this.customer = customer;
+    if (this.socket) {
+      this.saveHistory();
+      this.socket.subscribeRoom = this.socket.subscribe(
+        `/sub/socket/room/${customer.roomId}`, // 구독채널명
+        subscribeInfo => {
+          this.onRoomSubscribe(subscribeInfo);
+        },
+        {} // 구독시 전송할 헤더
+      );
+    }
+  }
+
+  @action
+  onPrivateSubscribe(socketResponse) {
+    if (socketResponse && socketResponse.body) {
+      let body = JSON.parse(socketResponse.body);
+      let { eventName, data } = body;
+      if (eventName === 'LOGINED') {
+        this.setCustomer(data.profile);
+      } else if (eventName === 'MESSAGE_LIST') {
+        this.onMessageList(data.messages);
+      } else if (eventName === 'START_MESSAGE') {
+        this.onMessage(data.message);
+      } else if (eventName === 'MESSAGE') {
+        this.onMessage(data.message);
+      }
+    }
+  }
+
+  @action
+  onRoomSubscribe(socketResponse) {
+    if (socketResponse && socketResponse.body) {
+      let body = JSON.parse(socketResponse.body);
+      let { eventName, data } = body;
+      if (eventName === 'MESSAGE') {
+        this.onMessage(data.message);
+      } else if (eventName === 'READ_MESSAGE') {
+        this.onReadMessage(data);
+      }
+    }
   }
 
   @action
@@ -159,29 +198,10 @@ class ChatStore {
   }
 
   @action
-  onWelcome(welcomeInfo) {
-    // message.info('welcome : ' + JSON.stringify(welcomeInfo));
-    let customer = welcomeInfo.customer;
-    let { roomId, speakerId } = customer;
-    this.customer = customer;
-    let socket = this.socket;
-    if (socket) {
-      SocketService.join(socket, roomId, speakerId);
-      this.saveHistory();
-    }
-  }
-
-  @action
   onMessageList(messageList) {
     if (!messageList.length) {
       this.notMoreMessage = true;
     } else {
-      // let imageMessage = _.clone(messageList[messageList.length - 1]);
-      // imageMessage.messageType = Constant.MESSAGE_TYPE_IMAGE;
-      // imageMessage.id = 999999;
-      // imageMessage.message =
-      //   'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png';
-      // messageList.push(imageMessage);
       let oriMessageList = this.messageList.toJS();
       let updateMessageList = messageList.concat(oriMessageList);
       let groupingDate = '';
@@ -241,6 +261,12 @@ class ChatStore {
       }, 500);
       let socket = this.socket;
       let { speakerId, roomId } = this.customer;
+      /*
+    
+        메시지가 왔을 경우 읽음 처리
+          1.내가 보낸 메시지가 아닌 경우
+
+      */
       if (newMessage.speakerId !== speakerId) {
         SocketService.readMessage(
           socket,
@@ -318,7 +344,7 @@ class ChatStore {
     let { roomId } = customer;
     SocketService.saveHistory(socket, roomId, [
       {
-        m: '나도 오늘 저녁이 기대된다!222',
+        m: '나도 오늘 저녁이 기대된다!yap',
         t: '2019-08-23 17:41:28'
       },
       {
@@ -329,18 +355,14 @@ class ChatStore {
   }
 
   @action
-  deleteMessage() {
-    let socket = this.socket;
-  }
-
-  @action
-  readMessage() {
-    let socket = this.socket;
-  }
-
-  @action
   moreMessage() {
     let socket = this.socket;
+  }
+
+  // div 기준으로 스크롤 이동시키기
+  @action
+  scrollBottomByDivId() {
+    Helper.scrollBottomByDivId(chatbotContainerId, scrollAnimationTime);
   }
 
   // 로그인 버튼 여부 체크
@@ -350,8 +372,7 @@ class ChatStore {
     let companyId = this.companyId;
     let appId = this.appId;
     let name = this.name;
-    let telNumber = this.telNumber;
-    if (companyId && appId && name && telNumber) {
+    if (companyId && appId && name) {
       disabled = false;
     }
     return disabled;

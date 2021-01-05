@@ -1,66 +1,93 @@
 class SocketService {
-  join(socket, roomId, speakerId) {
-    return new Promise((resolve, reject) => {
-      socket.emit(
-        'join',
-        { roomId: roomId, speakerId: speakerId },
-        (socketIoCallbackResponse, err) => {
-          if (err) {
-            reject({ message: 'socket 오류' });
-          } else {
-            resolve(socketIoCallbackResponse);
-          }
-        }
-      );
-    });
-  }
-
   sendMessage(socket, messageInfo) {
-    socket.emit('message', messageInfo);
-  }
-
-  review(socket, reviewScore) {
-    socket.emit('review', { reviewScore: reviewScore });
-  }
-
-  end(socket, roomId) {
-    socket.emit('end', { roomId: roomId });
+    socket.send(
+      '/pub/socket/message', // 메시지 발송URI
+      {}, // 전송할 헤더
+      JSON.stringify({
+        eventName: 'MESSAGE',
+        data: messageInfo
+      }) // 전송할 데이터
+    );
   }
 
   saveHistory(socket, roomId, historyJson) {
-    socket.emit('save-history', { roomId: roomId, data: historyJson });
+    socket.send(
+      '/pub/socket/message', // 메시지 발송URI
+      {}, // 전송할 헤더
+      JSON.stringify({
+        roomId: roomId,
+        eventName: 'SAVE_HISTORY',
+        data: { history: historyJson }
+      }) // 전송할 데이터
+    );
   }
 
-  deleteMessage(socket, messageId) {
-    return new Promise((resolve, reject) => {
-      socket.emit(
-        'delete-message',
-        { id: messageId },
-        (socketIoCallbackResponse, err) => {
-          if (err) {
-            reject({ message: 'socket 오류' });
-          } else {
-            resolve(socketIoCallbackResponse);
-          }
-        }
-      );
-    });
+  deleteMessage(socket, messageId, roomId) {
+    socket.send(
+      '/pub/socket/message', // 메시지 발송URI
+      {}, // 전송할 헤더
+      JSON.stringify({
+        roomId: roomId,
+        eventName: 'DELETE_MESSAGE',
+        data: { id: messageId }
+      }) // 전송할 데이터
+    );
   }
 
   readMessage(socket, roomId, speakerId, startId, endId) {
-    socket.emit('read-message', {
-      roomId: roomId,
-      speakerId: speakerId,
-      startId: startId,
-      endId: endId
-    });
+    socket.send(
+      '/pub/socket/message', // 메시지 발송URI
+      {}, // 전송할 헤더
+      JSON.stringify({
+        eventName: 'READ_MESSAGE',
+        roomId: roomId,
+        data: {
+          endId: endId,
+          startId: startId,
+          speakerId: speakerId,
+          roomId: roomId
+        }
+      }) // 전송할 데이터
+    );
   }
 
   moreMessage(socket, roomId, startId) {
-    socket.emit('message-list', {
-      roomId: roomId,
-      startId: startId
-    });
+    socket.send(
+      '/pub/socket/message', // 메시지 발송URI
+      {}, // 전송할 헤더
+      JSON.stringify({
+        eventName: 'MESSAGE_LIST',
+        roomId: roomId,
+        data: {
+          startId: startId
+        }
+      }) // 전송할 데이터
+    );
+  }
+
+  review(socket, reviewScore) {
+    socket.send(
+      '/pub/socket/message', // 메시지 발송URI
+      {}, // 전송할 헤더
+      JSON.stringify({
+        eventName: 'REVIEW',
+        data: {
+          reviewScore: reviewScore
+        }
+      }) // 전송할 데이터
+    );
+  }
+
+  end(socket, roomId) {
+    socket.send(
+      '/pub/socket/message', // 메시지 발송URI
+      {}, // 전송할 헤더
+      JSON.stringify({
+        eventName: 'END',
+        roomId: roomId,
+        data: {}
+      }) // 전송할 데이터
+    );
   }
 }
 
